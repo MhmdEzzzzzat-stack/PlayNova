@@ -3,7 +3,7 @@ PRAGMA foreign_keys = ON;
 CREATE TABLE IF NOT EXISTS analytics_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   event_id TEXT NOT NULL UNIQUE,
-  event_type TEXT NOT NULL CHECK(event_type IN ('game_view','search','game_start','load_success','load_failure','favorite_add','favorite_remove','category_visit','session_end','web_vital')),
+  event_type TEXT NOT NULL CHECK(event_type IN ('game_view','search','game_start','load_success','load_failure','favorite_add','favorite_remove','category_visit','session_end','web_vital','client_error','server_error')),
   game_id TEXT REFERENCES games(id) ON DELETE SET NULL,
   category_id TEXT REFERENCES categories(id) ON DELETE SET NULL,
   search_term TEXT NOT NULL DEFAULT '',
