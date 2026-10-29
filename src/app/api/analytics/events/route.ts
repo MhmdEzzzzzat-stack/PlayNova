@@ -13,7 +13,7 @@ export async function POST(request:NextRequest){
  if(!isAnalyticsEventType(type)||!isAnalyticsId(eventId)||!isAnalyticsId(sessionId,20,80))return response(400,"Invalid event.");
  const consent=request.headers.get("x-playnova-analytics-consent");if(consent!=="granted")return response(403,"Analytics consent is required.");
  const origin=request.headers.get("origin");try{if(!origin||new URL(origin).origin!==new URL(request.url).origin)return response(403,"Cross-origin event submission is not allowed.");}catch{return response(403,"Invalid request origin.");}
- const slug=str(body.slug,120),categoryId=str(body.categoryId,80),term=str(body.term,80).replace(/[<>\u0000-\u001f]/g,""),device=["mobile","desktop","tablet"].includes(str(body.device,12))?str(body.device,12):"unknown";
+ const slug=str(body.slug,120),categoryId=str(body.categoryId,80);let term=str(body.term,80).replace(/[<>\u0000-\u001f]/g,"");if(/\b[^\s@]+@[^\s@]+\.[^\s@]+\b/.test(term)||/https?:\/\//i.test(term)||/\+?\d[\d\s().-]{7,}\d/.test(term))term="";const device=["mobile","desktop","tablet"].includes(str(body.device,12))?str(body.device,12):"unknown";
  const duration=Number(body.durationMs),metricValue=Number(body.metricValue);
  if(body.durationMs!==undefined&&(!Number.isFinite(duration)||duration<0||duration>3600000))return response(400,"Invalid duration.");
  if(body.metricValue!==undefined&&(!Number.isFinite(metricValue)||metricValue<0||metricValue>60000))return response(400,"Invalid metric value.");
