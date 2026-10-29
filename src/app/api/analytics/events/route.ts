@@ -6,6 +6,7 @@ type Body={eventId?:unknown;type?:unknown;slug?:unknown;categoryId?:unknown;term
 const str=(v:unknown,max:number)=>typeof v==="string"?v.trim().slice(0,max):"";
 const response=(status:number,error?:string)=>NextResponse.json(error?{error}:{ok:true},{status,headers:{"Cache-Control":"no-store"}});
 export async function POST(request:NextRequest){
+ const userAgent=request.headers.get("user-agent")||"";if(/bot|crawler|spider|slurp|headless|lighthouse|pagespeed/i.test(userAgent))return response(202);
  const length=Number(request.headers.get("content-length")||0);if(length>8192)return response(413,"Event payload too large.");
  let body:Body;try{body=await request.json() as Body;}catch{return response(400,"Invalid event payload.");}
  const type=str(body.type,32),eventId=str(body.eventId,80),sessionId=str(body.sessionId,80);
