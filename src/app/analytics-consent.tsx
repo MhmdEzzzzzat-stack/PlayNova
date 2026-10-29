@@ -1,0 +1,6 @@
+"use client";
+import {useEffect,useState} from "react";
+export default function AnalyticsConsent(){const [visible,setVisible]=useState(false);useEffect(()=>{try{if(!localStorage.getItem("playnova-analytics-consent"))setVisible(true);}catch{}},[]);
+function choose(value:"granted"|"denied"){try{localStorage.setItem("playnova-analytics-consent",value);}catch{}setVisible(false);}
+if(!visible)return null;
+return <aside role="dialog" aria-label="Analytics privacy choices" dir="rtl" style={{position:"fixed",zIndex:100,bottom:16,left:16,right:16,maxWidth:680,margin:"auto",padding:18,border:"1px solid rgba(196,181,253,.25)",borderRadius:16,background:"#17132a",boxShadow:"0 12px 50px #0009",color:"#f7f5ff"}}><strong>اختيارات الخصوصية</strong><p style={{fontSize:13,lineHeight:1.8,color:"#c5bfdc",margin:"8px 0 14px"}}>نستخدم تحليلات أساسية مجهولة لفهم استخدام الألعاب وتحسين الأداء. لا نسجل كلمات المرور أو بيانات الحساب، ويمكنك رفض التحليلات دون التأثير على الموقع.</p><div style={{display:"flex",gap:9,flexWrap:"wrap"}}><button onClick={()=>choose("granted")} className="admin-secondary">موافقة على التحليلات</button><button onClick={()=>choose("denied")} className="admin-secondary">رفض</button></div></aside>}
