@@ -1,0 +1,49 @@
+import Link from "next/link";
+import {requireAdmin} from "@/lib/admin-auth";
+import {getPlayNovaDb} from "@/lib/db";
+export const dynamic="force-dynamic";
+function validDate(s?:string){if(!s||!/^\d{4}-\d{2}-\d{2}$/.test(s))return null;const d=new Date(s+"T00:00:00Z");return !Number.isNaN(d.getTime())&&d.toISOString().slice(0,10)===s?s:null;}
+type Metrics={views:number;searches:number;starts:number;loads:number;failures:number;favorites:number;categories:number;sessions:number;avgDuration:number};
+type GameRow={title_en:string;title_ar:string;views:number;starts:number;loads:number;failures:number;provider:string};
+type SearchRow={search_term:string;count:number};
+type CategoryRow={category_id:string;name_ar:string;name_en:string;visits:number};
+type DeviceRow={device_type:string;views:number;starts:number;loads:number;failures:number;avg_lcp:number|null;avg_inp:number|null;avg_cls:number|null};
+type ErrorRow={source_name:string;failure_code:string;count:number};
+export default async function AnalyticsPage({searchParams}:{searchParams:Promise<{from?:string;to?:string}>}){
+ try{await requireAdmin("reviewer");}catch{return <main className="admin-shell"><section className="admin-card"><h1>الوصول مرفوض</h1><Link href="/admin/login">تسجيل الدخول</Link></section></main>;}
+ const q=await searchParams,today=new Date().toISOString().slice(0,10),from=validDate(q.from)||new Date(Date.now()-6*86400000).toISOString().slice(0,10),to=validDate(q.to)||today,start=from<=to?from:to,end=from<=to?to:from,endExclusive=new Date(Date.parse(end+"T00:00:00Z")+86400000).toISOString().slice(0,10);
+ const db=await getPlayNovaDb(),range=[start,endExclusive];
+ const [metrics,games,searches,cats,devices,errors,vitals]=await Promise.all([
+ db.prepare(`SELECT
+ SUM(event_type='game_view') views,SUM(event_type='search') searches,SUM(event_type='game_start') starts,
+ SUM(event_type='load_success') loads,SUM(event_type='load_failure') failures,
+ SUM(event_type IN ('favorite_add','favorite_remove')) favorites,SUM(event_type='category_visit') categories,
+ COUNT(DISTINCT session_hash) sessions,AVG(CASE WHEN event_type='session_end' THEN duration_ms END) avgDuration
+ FROM analytics_events WHERE created_at>=? AND created_at<?`).bind(...range).first<Metrics>(),
+ db.prepare(`SELECT g.title_ar,g.title_en,g.source_name provider,
+ SUM(e.event_type='game_view') views,SUM(e.event_type='game_start') starts,SUM(e.event_type='load_success') loads,SUM(e.event_type='load_failure') failures
+ FROM analytics_events e JOIN games g ON g.id=e.game_id WHERE e.created_at>=? AND e.created_at<?
+ GROUP BY g.id ORDER BY views DESC,starts DESC LIMIT 10`).bind(...range).all<GameRow>(),
+ db.prepare(`SELECT search_term,COUNT(*) count FROM analytics_events WHERE event_type='search' AND search_results_count=0 AND created_at>=? AND created_at<? AND search_term!='' GROUP BY search_term ORDER BY count DESC LIMIT 10`).bind(...range).all<SearchRow>(),
+ db.prepare(`SELECT c.id category_id,c.name_ar,c.name_en,COUNT(*) visits FROM analytics_events e JOIN categories c ON c.id=e.category_id WHERE e.event_type='category_visit' AND e.created_at>=? AND e.created_at<? GROUP BY c.id ORDER BY visits DESC LIMIT 10`).bind(...range).all<CategoryRow>(),
+ db.prepare(`SELECT device_type,SUM(event_type='game_view') views,SUM(event_type='game_start') starts,SUM(event_type='load_success') loads,SUM(event_type='load_failure') failures,
+ AVG(CASE WHEN metric_name='LCP' THEN metric_value END) avg_lcp,AVG(CASE WHEN metric_name='INP' THEN metric_value END) avg_inp,AVG(CASE WHEN metric_name='CLS' THEN metric_value END) avg_cls
+ FROM analytics_events WHERE created_at>=? AND created_at<? GROUP BY device_type ORDER BY views DESC`).bind(...range).all<DeviceRow>(),
+ db.prepare(`SELECT COALESCE(g.source_name,'غير معروف') source_name,e.failure_code,COUNT(*) count FROM analytics_events e LEFT JOIN games g ON g.id=e.game_id WHERE e.event_type='load_failure' AND e.created_at>=? AND e.created_at<? GROUP BY g.source_name,e.failure_code ORDER BY count DESC LIMIT 10`).bind(...range).all<ErrorRow>(),
+ db.prepare(`SELECT metric_name,COUNT(*) samples,AVG(metric_value) average FROM analytics_events WHERE event_type='web_vital' AND metric_name IN ('LCP','INP','CLS','FCP','TTFB') AND created_at>=? AND created_at<? GROUP BY metric_name`).bind(...range).all<{metric_name:string;samples:number;average:number}>()
+ ]);
+ const n=(v:number|null|undefined)=>Number(v||0).toLocaleString("en-US"),successRate=metrics&&metrics.loads+metrics.failures>0?metrics.loads/(metrics.loads+metrics.failures)*100:null;
+ const cards=[["مشاهدات صفحات الألعاب",metrics?.views],["عمليات البحث",metrics?.searches],["محاولات بدء اللعب",metrics?.starts],["إشارات تحميل الإطار",metrics?.loads],["إخفاقات التحميل",metrics?.failures],["جلسات مجهولة",metrics?.sessions]];
+ return <main className="admin-shell" dir="rtl"><aside className="admin-sidebar"><Link href="/" className="admin-brand">Play<span>Nova</span><small>لوحة الإدارة</small></Link><nav><Link href="/admin">نظرة عامة</Link><Link className="active" href="/admin/analytics">التحليلات والأداء</Link><Link href="/admin/games">إدارة الألعاب</Link><Link href="/admin/assets">الملفات والأصول</Link><Link href="/admin/categories">التصنيفات</Link></nav></aside><section className="admin-main"><header className="admin-heading"><div><p className="admin-eyebrow">PRIVACY-FIRST ANALYTICS</p><h1>التحليلات والأداء</h1><p>بيانات حقيقية مسجلة بموافقة الزائر فقط؛ لا توجد أرقام تجريبية.</p></div><Link href="/admin" className="admin-secondary">العودة للوحة</Link></header>
+ <form className="admin-filter" method="get"><label>من <input type="date" name="from" defaultValue={start}/></label><label>إلى <input type="date" name="to" defaultValue={end}/></label><button type="submit">تطبيق الفترة</button></form>
+ <div className="admin-metrics">{cards.map(([label,value])=><article className="admin-metric" key={label}><span>{label}</span><strong>{n(value as number)}</strong></article>)}</div>
+ <div className="admin-metrics"><article className="admin-metric"><span>نسبة إشارات التحميل الناجحة</span><strong>{successRate===null?"—":successRate.toFixed(1)+"%"}</strong></article><article className="admin-metric"><span>متوسط مدة الجلسة المرسلة</span><strong>{metrics?.avgDuration?Math.round(metrics.avgDuration/1000)+" ثانية":"—"}</strong></article><article className="admin-metric"><span>المفضلة (إضافة/إزالة)</span><strong>{n(metrics?.favorites)}</strong></article><article className="admin-metric"><span>زيارات التصنيفات</span><strong>{n(metrics?.categories)}</strong></article></div>
+ <section className="admin-card"><h2>الألعاب الأكثر مشاهدة ومحاولات التشغيل</h2><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>اللعبة</th><th>مشاهدات</th><th>بدء</th><th>تحميل إطار</th><th>إخفاقات</th><th>المزود</th></tr></thead><tbody>{games.results.map((g,i)=><tr key={g.title_en+i}><td>{g.title_ar} / {g.title_en}</td><td>{n(g.views)}</td><td>{n(g.starts)}</td><td>{n(g.loads)}</td><td>{n(g.failures)}</td><td>{g.provider}</td></tr>)}</tbody></table></div>{!games.results.length&&<p className="admin-empty">لا توجد أحداث ألعاب في الفترة المحددة.</p>}</section>
+ <section className="admin-card"><h2>عبارات البحث التي لم تجد نتائج</h2>{searches.results.length?<div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>عبارة البحث</th><th>عدد المرات</th></tr></thead><tbody>{searches.results.map(x=><tr key={x.search_term}><td>{x.search_term}</td><td>{n(x.count)}</td></tr>)}</tbody></table></div>:<p className="admin-empty">لا توجد عمليات بحث بلا نتائج مسجلة.</p>}</section>
+ <section className="admin-card"><h2>التصنيفات الأكثر زيارة</h2>{cats.results.length?<div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>التصنيف</th><th>الزيارات</th></tr></thead><tbody>{cats.results.map(x=><tr key={x.category_id}><td>{x.name_ar} / {x.name_en}</td><td>{n(x.visits)}</td></tr>)}</tbody></table></div>:<p className="admin-empty">لا توجد زيارات تصنيفات مسجلة.</p>}</section>
+ <section className="admin-card"><h2>الأداء حسب نوع الجهاز</h2><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>الجهاز</th><th>مشاهدات</th><th>بدء</th><th>تحميل</th><th>فشل</th><th>LCP ms</th><th>INP ms</th><th>CLS</th></tr></thead><tbody>{devices.results.map(x=><tr key={x.device_type}><td>{x.device_type}</td><td>{n(x.views)}</td><td>{n(x.starts)}</td><td>{n(x.loads)}</td><td>{n(x.failures)}</td><td>{x.avg_lcp===null?"—":Math.round(x.avg_lcp)}</td><td>{x.avg_inp===null?"—":Math.round(x.avg_inp)}</td><td>{x.avg_cls===null?"—":x.avg_cls.toFixed(3)}</td></tr>)}</tbody></table></div></section>
+ <section className="admin-card"><h2>أخطاء التشغيل حسب المزود</h2>{errors.results.length?<div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>المزود</th><th>نوع الخطأ</th><th>العدد</th></tr></thead><tbody>{errors.results.map((x,i)=><tr key={x.source_name+x.failure_code+i}><td>{x.source_name}</td><td>{x.failure_code||"unknown"}</td><td>{n(x.count)}</td></tr>)}</tbody></table></div>:<p className="admin-empty">لا توجد إخفاقات مسجلة.</p>}</section>
+ <section className="admin-card"><h2>مؤشرات Core Web Vitals</h2>{vitals.results.length?<div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>المؤشر</th><th>عدد العينات</th><th>المتوسط</th></tr></thead><tbody>{vitals.results.map(x=><tr key={x.metric_name}><td>{x.metric_name}</td><td>{n(x.samples)}</td><td>{x.average.toFixed(2)}</td></tr>)}</tbody></table></div>:<p className="admin-empty">لا توجد عينات Web Vitals حتى الآن؛ لم يتم جمع بيانات غير متاحة.</p>}</section>
+ <p className="admin-footnote">الفترة: {start} إلى {end}. الجلسات تُحسب بمعرّف عشوائي مجهول بموافقة المستخدم. تحميل iframe لا يثبت أن اللعبة أصبحت قابلة للعب؛ هو مجرد إشارة تحميل من المتصفح. لا يتم جمع عناوين IP أو بيانات شخصية مباشرة. بيانات الزيارات العائدة غير متاحة بعد ولا تُستنتج من التخمين.</p>
+ </section></main>;
+}
