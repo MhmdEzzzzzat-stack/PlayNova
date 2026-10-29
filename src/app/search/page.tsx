@@ -3,7 +3,7 @@ import Link from "next/link";
 import { normalizeSearchTerm, getLocale } from "@/lib/categories";
 import {SearchEvent} from "@/components/analytics-events";
 
-export const metadata: Metadata = { title: "Search games", description: "Search the PlayNova game catalog." };
+export const metadata: Metadata = { title: "Search games", description: "Search the PlayNova game catalog.", robots: { index: false, follow: true }, alternates: { canonical: "/search" } };
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string; lang?: string; page?: string }> }) {
   const params = await searchParams;
