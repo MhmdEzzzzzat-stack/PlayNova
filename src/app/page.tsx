@@ -3,220 +3,228 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, Gamepad2, Globe2, Search, Sparkles, Zap, Menu, X,
-  Heart, Clock3, Compass, ShieldCheck
+  Gamepad2, Globe2, Search, Sparkles, Menu, X, Heart, Clock3,
+  Compass, ShieldCheck, ArrowLeft, ChevronLeft, Car, Trophy,
+  Swords, Mountain, Puzzle, Users, Box, Star, Flame, CalendarDays
 } from "lucide-react";
 
 type Locale = "ar" | "en";
+type Category = { id: string; ar: string; en: string; icon: typeof Gamepad2 };
+type Game = {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  thumbnail?: string;
+  publishedAt: string;
+  featured?: boolean;
+  popularity?: number;
+};
 
-const games = [
-  { id: "world", title: { ar: "عالم الألعاب", en: "Game Universe" }, subtitle: { ar: "اكتشف مغامرتك القادمة", en: "Discover your next adventure" }, category: "adventure", icon: "✦", tone: "from-violet-500/35 via-indigo-500/20 to-slate-950" },
-  { id: "puzzle", title: { ar: "تحديات الذكاء", en: "Mind Challenges" }, subtitle: { ar: "اختبر مهاراتك", en: "Put your skills to the test" }, category: "puzzle", icon: "◇", tone: "from-cyan-400/30 via-blue-500/20 to-slate-950" },
-  { id: "speed", title: { ar: "سرعة وحماس", en: "Speed & Thrills" }, subtitle: { ar: "استعد وانطلق", en: "Ready, set, go" }, category: "racing", icon: "⚡", tone: "from-fuchsia-500/30 via-purple-500/20 to-slate-950" },
-];
+// The repository does not yet include a published-game catalog or API.
+// Keep this collection empty rather than presenting invented games as real content.
+const publishedGames: Game[] = [];
 
-const categories = [
-  { id: "all", ar: "الكل", en: "All games" },
-  { id: "action", ar: "أكشن", en: "Action" },
-  { id: "puzzle", ar: "ألغاز", en: "Puzzle" },
-  { id: "racing", ar: "سباق", en: "Racing" },
-  { id: "sports", ar: "رياضة", en: "Sports" },
-  { id: "adventure", ar: "مغامرات", en: "Adventure" },
+const categories: Category[] = [
+  { id: "racing", ar: "سباق", en: "Racing", icon: Car },
+  { id: "football", ar: "كرة القدم", en: "Football", icon: Trophy },
+  { id: "sports", ar: "رياضة", en: "Sports", icon: Trophy },
+  { id: "action", ar: "أكشن", en: "Action", icon: Swords },
+  { id: "adventure", ar: "مغامرات", en: "Adventure", icon: Mountain },
+  { id: "puzzle", ar: "ألغاز", en: "Puzzle", icon: Puzzle },
+  { id: "casual", ar: "خفيفة", en: "Casual", icon: Sparkles },
+  { id: "multiplayer", ar: "متعددة اللاعبين", en: "Multiplayer", icon: Users },
+  { id: "3d", ar: "ألعاب ثلاثية الأبعاد", en: "3D Games", icon: Box },
 ];
 
 const copy = {
   ar: {
-    tagline: "عالمك. لعبتك. مغامرتك.", navDiscover: "اكتشف الألعاب", navCategories: "التصنيفات", navAbout: "عن PlayNova",
-    heroEyebrow: "مساحة جديدة للعب والاكتشاف", heroTitle: "لعبتك القادمة", heroAccent: "على بُعد نقرة.",
-    heroText: "اكتشف تجارب ألعاب متنوعة من مكان واحد. نبني PlayNova لتكون وجهتك الجديدة لألعاب المتصفح.",
-    explore: "استكشف المنصة", categoriesEyebrow: "اختر أسلوبك", categoriesTitle: "تصفّح التصنيفات",
-    discoverEyebrow: "ابدأ رحلتك", discoverTitle: "اكتشف PlayNova", search: "ابحث عن لعبة...",
-    coming: "قريبًا", honest: "هذه معاينة للمنصة — الألعاب القابلة للتشغيل ستُضاف بعد التحقق من مصادرها وأذونات استخدامها.",
-    aboutTitle: "نبدأ صغيرًا، ونبني للمستقبل.", aboutText: "PlayNova قيد التطوير. سنضيف الألعاب بعد التحقق من مصادرها وأذونات استخدامها، مع الاهتمام بالأداء وتجربة اللعب على مختلف الأجهزة.",
-    foundation: "النسخة التأسيسية", footer: "مصممة بحب لعشاق ألعاب المتصفح.", empty: "لا توجد نتائج مطابقة. جرّب كلمة بحث أو تصنيفًا آخر.",
-    noGames: "محتوى تجريبي", favorites: "المفضلة", recent: "شوهدت مؤخرًا", legal: "روابط مهمة", privacy: "الخصوصية", terms: "الشروط", contact: "تواصل معنا",
-    searchLabel: "ابحث في الألعاب", menu: "القائمة", categoriesAll: "كل التصنيفات"
+    tagline: "عالمك. لعبتك. مغامرتك.", discover: "اكتشف", categories: "التصنيفات", about: "عن PlayNova",
+    eyebrow: "مساحة جديدة للعب والاكتشاف", title: "لعبتك القادمة", accent: "تبدأ من هنا.",
+    intro: "اكتشف ألعاب متصفح متنوعة من مكان واحد. نعمل على بناء تجربة لعب سهلة وسريعة على كل أجهزتك.",
+    explore: "استكشف الألعاب", browse: "تصفّح حسب النوع", all: "كل الألعاب",
+    featured: "ألعاب مختارة", popular: "الأكثر لعبًا", newest: "أحدث الألعاب",
+    recently: "تابع من حيث توقفت", recommended: "قد تعجبك", search: "ابحث عن لعبة أو تصنيف...",
+    empty: "لا توجد ألعاب منشورة في هذا القسم حاليًا.", emptySearch: "لم نعثر على ألعاب تطابق بحثك.",
+    catalogNote: "سيظهر هنا محتوى الألعاب بعد ربط كتالوج الألعاب المنشورة والتحقق من صلاحية تشغيلها.",
+    aboutTitle: "منصة ألعاب تُبنى بعناية.", aboutText: "PlayNova مشروع قيد التطوير. نضيف الألعاب بعد التحقق من مصادرها وأذونات استخدامها، ونهتم بتجربة سلسة وآمنة.",
+    about: "عن المنصة", contact: "تواصل معنا", privacy: "الخصوصية", terms: "الشروط", copyright: "الإبلاغ عن حقوق النشر",
+    useful: "روابط مهمة", footer: "مصممة لعشاق ألعاب المتصفح.", language: "تغيير اللغة",
+    menu: "فتح القائمة", favorites: "إضافة للمفضلة", noFavorites: "سجّل ألعابك المفضلة بعد توفر الكتالوج.",
+    noRecent: "الألعاب التي تلعبها ستظهر هنا.", recommendedRule: "اقتراحات مبنية على التصنيف وسجل اللعب، بعد توفر بيانات الألعاب.",
+    coming: "قريبًا", status: "الكتالوج قيد التجهيز", loading: "جارٍ تحميل الألعاب..."
   },
   en: {
-    tagline: "Your world. Your game. Your adventure.", navDiscover: "Discover", navCategories: "Categories", navAbout: "About",
-    heroEyebrow: "A new space to play and explore", heroTitle: "Your next game", heroAccent: "is one click away.",
-    heroText: "Discover a variety of gaming experiences in one place. PlayNova is being built as your new browser gaming destination.",
-    explore: "Explore PlayNova", categoriesEyebrow: "Choose your style", categoriesTitle: "Browse categories",
-    discoverEyebrow: "Start your journey", discoverTitle: "Discover PlayNova", search: "Search games...",
-    coming: "Coming soon", honest: "Platform preview — playable games will be added after their sources and usage permissions are verified.",
-    aboutTitle: "Starting small. Building for more.", aboutText: "PlayNova is in development. Games will be added only after checking their sources and permissions, with a focus on performance and a great experience across devices.",
-    foundation: "Foundation release", footer: "Made for browser gaming fans.", empty: "No matching results. Try another search or category.",
-    noGames: "Preview content", favorites: "Favorites", recent: "Recently viewed", legal: "Useful links", privacy: "Privacy", terms: "Terms", contact: "Contact",
-    searchLabel: "Search games", menu: "Menu", categoriesAll: "All categories"
+    tagline: "Your world. Your game. Your adventure.", discover: "Discover", categories: "Categories", about: "About PlayNova",
+    eyebrow: "A new space to play and explore", title: "Your next game", accent: "starts right here.",
+    intro: "Discover browser games in one place. We're building a smooth, accessible gaming experience for all your devices.",
+    explore: "Explore games", browse: "Browse by genre", all: "All games",
+    featured: "Featured games", popular: "Most played", newest: "New games",
+    recently: "Pick up where you left off", recommended: "Recommended for you", search: "Search games or genres...",
+    empty: "There are no published games in this section yet.", emptySearch: "No games match your search.",
+    catalogNote: "Games will appear here once the published catalog is connected and each game's permission to run is verified.",
+    aboutTitle: "A gaming platform, built with care.", aboutText: "PlayNova is in development. Games are added only after checking their sources and permissions, with a focus on a smooth and safe experience.",
+    contact: "Contact", privacy: "Privacy", terms: "Terms", copyright: "Copyright reporting",
+    useful: "Useful links", footer: "Made for browser gaming fans.", language: "Change language",
+    menu: "Open menu", favorites: "Add to favorites", noFavorites: "Your saved games will appear here once the catalog is available.",
+    noRecent: "Games you play will appear here.", recommendedRule: "Suggestions will use genres and play history once game data is available.",
+    coming: "Coming soon", status: "Catalog in preparation", loading: "Loading games..."
   }
 };
 
+function GameSection({
+  title, subtitle, locale, games, empty, onFavorite, favorites
+}: {
+  title: string; subtitle?: string; locale: Locale; games: Game[]; empty: string;
+  onFavorite: (id: string) => void; favorites: string[];
+}) {
+  return (
+    <section className="container section-space">
+      <div className="section-heading">
+        <div><p className="section-kicker">{subtitle}</p><h2 className="section-title">{title}</h2></div>
+        <span className="section-count">{games.length}</span>
+      </div>
+      {games.length === 0 ? (
+        <div className="catalog-empty"><Gamepad2 size={25} /><p>{empty}</p></div>
+      ) : (
+        <div className="game-grid">
+          {games.map((game) => (
+            <article key={game.id} className="game-card">
+              <Link href={`/games/${game.slug}`} className="game-card-link" aria-label={game.title}>
+                <div className="game-thumb">
+                  {game.thumbnail ? <img src={game.thumbnail} alt="" loading="lazy" /> : <Gamepad2 size={42} />}
+                  <span className="game-category">{game.category}</span>
+                </div>
+                <div className="game-card-copy"><h3>{game.title}</h3><span>{game.category}</span></div>
+              </Link>
+              <button type="button" className="favorite-button" onClick={() => onFavorite(game.id)} aria-label={`${locale === "ar" ? "تبديل المفضلة" : "Toggle favorite"}: ${game.title}`} aria-pressed={favorites.includes(game.id)}>
+                <Heart size={17} fill={favorites.includes(game.id) ? "currentColor" : "none"} />
+              </button>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function HomePage() {
   const [locale, setLocale] = useState<Locale>("ar");
-  const [activeCategory, setActiveCategory] = useState("all");
   const [query, setQuery] = useState("");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [category, setCategory] = useState("all");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [recent, setRecent] = useState<string[]>([]);
+  const [ready, setReady] = useState(false);
   const t = copy[locale];
   const isArabic = locale === "ar";
 
   useEffect(() => {
+    try {
+      const savedLocale = localStorage.getItem("playnova-locale");
+      if (savedLocale === "ar" || savedLocale === "en") setLocale(savedLocale);
+      setFavorites(JSON.parse(localStorage.getItem("playnova-favorites") || "[]"));
+      setRecent(JSON.parse(localStorage.getItem("playnova-recent") || "[]"));
+    } catch {
+      setFavorites([]);
+      setRecent([]);
+    }
+    setReady(true);
+  }, []);
+
+  useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = isArabic ? "rtl" : "ltr";
+    try { localStorage.setItem("playnova-locale", locale); } catch {}
   }, [locale, isArabic]);
 
-  const visibleGames = useMemo(() => games.filter((game) => {
-    const matchesCategory = activeCategory === "all" || game.category === activeCategory;
-    const searchable = `${game.title[locale]} ${game.subtitle[locale]}`.toLocaleLowerCase();
-    return matchesCategory && searchable.includes(query.trim().toLocaleLowerCase());
-  }), [activeCategory, locale, query]);
+  const toggleFavorite = (id: string) => {
+    setFavorites((current) => {
+      const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
+      try { localStorage.setItem("playnova-favorites", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+
+  const filtered = useMemo(() => publishedGames.filter((game) => {
+    const matchesCategory = category === "all" || game.category.toLowerCase() === category;
+    const term = query.trim().toLocaleLowerCase();
+    return matchesCategory && (!term || `${game.title} ${game.category}`.toLocaleLowerCase().includes(term));
+  }), [category, query]);
+
+  const featured = filtered.filter((game) => game.featured);
+  const popular = [...filtered].filter((game) => typeof game.popularity === "number").sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+  const newest = [...filtered].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+  const recentGames = recent.map((id) => publishedGames.find((game) => game.id === id)).filter((game): game is Game => Boolean(game));
+  const recommended = [...filtered].filter((game) => !recent.includes(game.id)).slice(0, 8);
+
+  const switchLocale = () => setLocale((value) => value === "ar" ? "en" : "ar");
 
   return (
     <main className="min-h-screen overflow-hidden pb-12">
       <header className="site-header">
-        <div className="container flex min-h-[82px] items-center justify-between gap-4">
-          <Link href="/" className="flex shrink-0 items-center gap-3" aria-label="PlayNova home">
-            <span className="nova-gradient flex h-11 w-11 items-center justify-center rounded-2xl text-white shadow-glow">
-              <Gamepad2 size={24} />
-            </span>
-            <span>
-              <span className="block text-xl font-black tracking-tight">Play<span className="text-violet-300">Nova</span></span>
-              <span className="block text-[11px] text-violet-200/55">{t.tagline}</span>
-            </span>
+        <div className="container header-inner">
+          <Link href="/" className="brand" aria-label="PlayNova home">
+            <span className="brand-mark"><Gamepad2 size={24} /></span>
+            <span><strong>Play<span>Nova</span></strong><small>{t.tagline}</small></span>
           </Link>
-
-          <nav className="hidden items-center gap-7 text-sm text-violet-100/70 md:flex" aria-label="Main navigation">
-            <a className="nav-link" href="#discover">{t.navDiscover}</a>
-            <a className="nav-link" href="#categories">{t.navCategories}</a>
-            <a className="nav-link" href="#about">{t.navAbout}</a>
+          <nav className="desktop-nav" aria-label={isArabic ? "التنقل الرئيسي" : "Main navigation"}>
+            <a href="#discover">{t.discover}</a><a href="#categories">{t.categories}</a><a href="#about">{t.about}</a>
           </nav>
-
-          <div className="flex items-center gap-2">
-            <button type="button" className="language-button" onClick={() => setLocale(isArabic ? "en" : "ar")} aria-label={isArabic ? "Switch to English" : "التبديل إلى العربية"}>
-              <Globe2 size={17} /><span>{isArabic ? "EN" : "عربي"}</span>
-            </button>
-            <button type="button" className="icon-button md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-expanded={mobileMenuOpen} aria-label={t.menu}>
-              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
+          <div className="header-actions">
+            <button type="button" className="language-button" onClick={switchLocale} aria-label={t.language}><Globe2 size={17} /><span>{isArabic ? "EN" : "عربي"}</span></button>
+            <button type="button" className="menu-button" onClick={() => setMenuOpen((v) => !v)} aria-expanded={menuOpen} aria-label={t.menu}>{menuOpen ? <X /> : <Menu />}</button>
           </div>
         </div>
-        {mobileMenuOpen && (
-          <nav className="container mobile-menu md:hidden" aria-label="Mobile navigation">
-            <a href="#discover" onClick={() => setMobileMenuOpen(false)}>{t.navDiscover}</a>
-            <a href="#categories" onClick={() => setMobileMenuOpen(false)}>{t.navCategories}</a>
-            <a href="#about" onClick={() => setMobileMenuOpen(false)}>{t.navAbout}</a>
-          </nav>
-        )}
+        {menuOpen && <nav className="mobile-nav container"><a href="#discover" onClick={() => setMenuOpen(false)}>{t.discover}</a><a href="#categories" onClick={() => setMenuOpen(false)}>{t.categories}</a><a href="#about" onClick={() => setMenuOpen(false)}>{t.about}</a></nav>}
       </header>
 
-      <section className="container pt-8 md:pt-12">
-        <div className="hero-panel relative overflow-hidden rounded-[2rem] px-6 py-12 md:px-14 md:py-16">
-          <div className="hero-orb hero-orb-one" />
-          <div className="hero-orb hero-orb-two" />
-          <div className="relative z-10 max-w-2xl">
-            <span className="eyebrow mb-5 inline-flex items-center gap-2">
-              <Sparkles size={14} /> {t.heroEyebrow}
-            </span>
-            <h1 className="text-4xl font-black leading-[1.2] tracking-tight sm:text-5xl md:text-6xl">
-              {t.heroTitle}
-              <span className="mt-2 block bg-gradient-to-l from-violet-200 via-fuchsia-300 to-violet-400 bg-clip-text text-transparent">{t.heroAccent}</span>
-            </h1>
-            <p className="mt-5 max-w-xl text-base leading-8 text-violet-100/65 md:text-lg">{t.heroText}</p>
-            <a href="#discover" className="primary-button mt-8 inline-flex items-center gap-2">
-              {t.explore} <ArrowLeft size={18} className={isArabic ? "" : "rotate-180"} />
-            </a>
+      <section className="container hero-wrap">
+        <div className="hero-panel">
+          <div className="hero-copy">
+            <span className="eyebrow"><Sparkles size={14} />{t.eyebrow}</span>
+            <h1>{t.title}<span>{t.accent}</span></h1>
+            <p>{t.intro}</p>
+            <a className="primary-button" href="#discover">{t.explore}<ArrowLeft size={18} className={isArabic ? "" : "rotate-180"} /></a>
           </div>
-          <div className="hero-art pointer-events-none absolute bottom-0 left-0 hidden h-full w-[38%] items-center justify-center md:flex" aria-hidden="true">
-            <div className="relative flex h-64 w-64 rotate-[-8deg] items-center justify-center rounded-[3rem] border border-violet-200/20 bg-violet-400/5">
-              <div className="absolute inset-5 rounded-[2.4rem] border border-fuchsia-300/20" />
-              <Gamepad2 size={112} strokeWidth={1.1} className="text-violet-200 drop-shadow-[0_0_28px_rgba(167,139,250,0.5)]" />
-              <span className="absolute -right-4 top-7 rounded-xl bg-fuchsia-400/15 p-3 text-fuchsia-200"><Zap size={24} /></span>
-              <span className="absolute -bottom-3 -left-3 rounded-xl bg-violet-400/15 p-3 text-violet-200"><Sparkles size={22} /></span>
-            </div>
-          </div>
+          <div className="hero-graphic" aria-hidden="true"><div className="hero-console"><Gamepad2 size={108} strokeWidth={1.1} /></div><span className="hero-star"><Star /></span><span className="hero-flame"><Flame /></span></div>
         </div>
       </section>
 
-      <section id="categories" className="container pt-12">
-        <div className="mb-5">
-          <p className="section-kicker">{t.categoriesEyebrow}</p>
-          <h2 className="section-title">{t.categoriesTitle}</h2>
-        </div>
-        <div className="flex gap-2 overflow-x-auto pb-3" role="group" aria-label={t.categoriesAll}>
-          {categories.map((category) => (
-            <button key={category.id} type="button" aria-pressed={activeCategory === category.id}
-              onClick={() => setActiveCategory(category.id)}
-              className={activeCategory === category.id ? "category-chip category-chip-active" : "category-chip"}>
-              {category[locale]}
-            </button>
-          ))}
+      <section id="categories" className="container category-section">
+        <div className="section-heading"><div><p className="section-kicker">{t.browse}</p><h2 className="section-title">{t.categories}</h2></div></div>
+        <div className="category-list">
+          <button type="button" className={category === "all" ? "category-chip active" : "category-chip"} onClick={() => setCategory("all")}>{t.all}</button>
+          {categories.map((item) => { const Icon = item.icon; return <button type="button" key={item.id} className={category === item.id ? "category-chip active" : "category-chip"} aria-pressed={category === item.id} onClick={() => setCategory(item.id)}><Icon size={16} />{item[locale]}</button>; })}
         </div>
       </section>
 
-      <section id="discover" className="container pt-9">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="section-kicker">{t.discoverEyebrow}</p>
-            <h2 className="section-title">{t.discoverTitle}</h2>
-          </div>
-          <label className="search-field">
-            <Search size={18} className="shrink-0 text-violet-200/55" />
-            <span className="sr-only">{t.searchLabel}</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search} type="search" />
-            {query && <button type="button" onClick={() => setQuery("")} className="text-xs text-violet-200/70 hover:text-white">×</button>}
-          </label>
-        </div>
-
-        {visibleGames.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleGames.map((game) => (
-              <article key={game.id} className="game-card group">
-                <div className={`game-art relative flex aspect-[16/9] items-center justify-center overflow-hidden bg-gradient-to-br ${game.tone}`}>
-                  <span className="game-art-glow" />
-                  <span className="relative text-6xl text-violet-100/85 transition duration-300 group-hover:scale-110">{game.icon}</span>
-                  <span className="absolute end-3 top-3 rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs text-violet-100/80">{t.coming}</span>
-                  <span className="absolute start-3 bottom-3 rounded-lg bg-black/25 p-2 text-violet-100/75"><Gamepad2 size={18} /></span>
-                </div>
-                <div className="p-5">
-                  <h3 className="text-lg font-bold">{game.title[locale]}</h3>
-                  <p className="mt-1 text-sm text-violet-100/55">{game.subtitle[locale]}</p>
-                  <p className="mt-4 text-xs text-violet-300/70">{t.noGames}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <Search size={26} className="mx-auto mb-3 text-violet-300/70" />
-            <p>{t.empty}</p>
-          </div>
-        )}
-        <p className="mt-4 text-xs leading-6 text-violet-100/40">{t.honest}</p>
+      <section id="discover" className="container search-section">
+        <label className="search-field"><Search size={19} /><span className="sr-only">{t.search}</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search} type="search" /><kbd>⌕</kbd></label>
+        {!ready && <p className="loading-note">{t.loading}</p>}
+        {ready && query && filtered.length === 0 && <p className="search-feedback">{t.emptySearch}</p>}
       </section>
 
-      <section className="container pt-12">
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="feature-tile"><Compass size={20} /><span>{t.navDiscover}</span></div>
-          <div className="feature-tile"><Heart size={20} /><span>{t.favorites}</span><small>{t.coming}</small></div>
-          <div className="feature-tile"><Clock3 size={20} /><span>{t.recent}</span><small>{t.coming}</small></div>
-        </div>
+      <GameSection title={t.featured} subtitle={t.status} locale={locale} games={featured} empty={t.empty} favorites={favorites} onFavorite={toggleFavorite} />
+      <GameSection title={t.popular} subtitle={isArabic ? "حسب أحداث اللعب المسجلة" : "Based on recorded play events"} locale={locale} games={popular} empty={t.empty} favorites={favorites} onFavorite={toggleFavorite} />
+      <GameSection title={t.newest} subtitle={isArabic ? "مرتبة بتاريخ النشر" : "Ordered by publication date"} locale={locale} games={newest} empty={t.empty} favorites={favorites} onFavorite={toggleFavorite} />
+      <GameSection title={t.recently} subtitle={isArabic ? "سجل اللعب على هذا الجهاز" : "This device's play history"} locale={locale} games={recentGames} empty={t.noRecent} favorites={favorites} onFavorite={toggleFavorite} />
+      <GameSection title={t.recommended} subtitle={t.recommendedRule} locale={locale} games={recommended} empty={t.empty} favorites={favorites} onFavorite={toggleFavorite} />
+
+      <section className="container genre-section">
+        {categories.map((item) => {
+          const genreGames = filtered.filter((game) => game.category.toLowerCase() === item.id);
+          return <GameSection key={item.id} title={item[locale]} subtitle={isArabic ? "تصفّح النوع" : "Explore this genre"} locale={locale} games={genreGames} empty={t.empty} favorites={favorites} onFavorite={toggleFavorite} />;
+        })}
       </section>
 
-      <section id="about" className="container pt-12">
-        <div className="about-panel flex flex-col gap-4 rounded-2xl p-6 md:flex-row md:items-center md:justify-between md:p-8">
-          <div>
-            <h2 className="text-xl font-extrabold">{t.aboutTitle}</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-7 text-violet-100/60">{t.aboutText}</p>
-          </div>
-          <span className="eyebrow inline-flex shrink-0 items-center gap-2 self-start md:self-auto"><ShieldCheck size={15} /> {t.foundation}</span>
-        </div>
+      <section id="about" className="container about-section">
+        <div className="about-panel"><div><span className="eyebrow"><ShieldCheck size={15} />PlayNova</span><h2>{t.aboutTitle}</h2><p>{t.aboutText}</p></div><span className="about-badge"><Gamepad2 size={26} />{t.coming}</span></div>
       </section>
 
-      <footer className="container mt-14 border-t border-white/10 pt-7 text-sm text-violet-100/45">
-        <div className="flex flex-col justify-between gap-5 sm:flex-row">
-          <div><p className="font-bold text-white">Play<span className="text-violet-300">Nova</span></p><p className="mt-1">{t.footer}</p></div>
-          <div><p className="mb-2 font-semibold text-violet-100/70">{t.legal}</p><div className="flex flex-wrap gap-4"><span>{t.privacy}</span><span>{t.terms}</span><span>{t.contact}</span></div></div>
-          <p>© {new Date().getFullYear()} PlayNova.</p>
-        </div>
+      <footer className="container site-footer">
+        <div className="footer-brand"><strong>Play<span>Nova</span></strong><p>{t.footer}</p><small>© {new Date().getFullYear()} PlayNova.</small></div>
+        <div className="footer-links"><h3>{t.useful}</h3><span>{t.about}</span><span>{t.contact} · {t.coming}</span><span>{t.privacy} · {t.coming}</span><span>{t.terms} · {t.coming}</span><span>{t.copyright} · {t.coming}</span></div>
       </footer>
     </main>
   );
