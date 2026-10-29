@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { COOKIE_NAME, revokeAdminSession } from "@/lib/admin-auth";
 
-export const runtime = "edge";
 
 export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin");
