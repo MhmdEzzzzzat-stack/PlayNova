@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import AnalyticsConsent from "./analytics-consent";
+import SiteVitals from "./site-vitals";
 
 export const metadata: Metadata = {
   title: {
@@ -23,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl">
-      <body>{children}<AnalyticsConsent /></body>
+      <body>{children}<AnalyticsConsent /><SiteVitals /></body>
     </html>
   );
 }
