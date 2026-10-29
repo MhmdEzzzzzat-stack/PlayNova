@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { categories, getCategory, getLocale, parsePage } from "@/lib/categories";
+import {CategoryViewEvent} from "@/components/analytics-events";
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ lang?: string; page?: string }> };
 
@@ -29,6 +30,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const related = categories.filter((item) => item.slug !== slug).slice(0, 5);
   return (
     <main className="directory-page" dir={ar ? "rtl" : "ltr"} lang={locale}>
+      <CategoryViewEvent categoryId={category.slug} />
       <div className="directory-container">
         <nav className="breadcrumbs" aria-label={ar ? "مسار التنقل" : "Breadcrumb"}>
           <Link href="/">{t.home}</Link><span>/</span><Link href={`/categories?lang=${locale}`}>{t.cats}</Link><span>/</span><span>{category.name[locale]}</span>
