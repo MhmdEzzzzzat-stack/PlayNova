@@ -1,0 +1,28 @@
+import type { Metadata } from "next";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: {
+    default: "PlayNova — العب واكتشف",
+    template: "%s | PlayNova",
+  },
+  description:
+    "اكتشف عالمًا من ألعاب المتصفح. منصة PlayNova قيد التطوير.",
+  applicationName: "PlayNova",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="ar" dir="rtl">
+      <body>{children}</body>
+    </html>
+  );
+}
