@@ -36,7 +36,7 @@ export async function verifyAdminPassword(password: string, encoded: string): Pr
     const [scheme, iterationsText, saltText, expectedText] = encoded.split("$");
     const iterations = Number(iterationsText);
     if (scheme !== "pbkdf2-sha256" || !Number.isInteger(iterations) || iterations < 100_000 || iterations > 1_000_000) return false;
-    const salt = fromBase64Url(saltText);
+    const salt = new Uint8Array(fromBase64Url(saltText));
     const expected = fromBase64Url(expectedText);
     const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
     const actual = new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations }, key, expected.length * 8));
