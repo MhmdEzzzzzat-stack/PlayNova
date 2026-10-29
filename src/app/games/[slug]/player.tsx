@@ -12,6 +12,8 @@ type LaunchConfig = {
 };
 
 type Props = {
+  slug: string;
+  locale: "ar" | "en";
   launch: LaunchConfig;
   title: string;
   unavailableText: string;
@@ -31,12 +33,30 @@ function getSafeLaunchUrl(config: LaunchConfig) {
   }
 }
 
-export default function GamePlayer({ launch, title, unavailableText, emptyText }: Props) {
+export default function GamePlayer({ slug, locale, launch, title, unavailableText, emptyText }: Props) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [started, setStarted] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const safeUrl = getSafeLaunchUrl(launch);
+  const ar = locale === "ar";
+  const labels = ar
+    ? { fullscreen: "ملء الشاشة", start: "ابدأ اللعبة", loading: "جارٍ تحميل اللعبة…", failed: "تعذر تحميل اللعبة.", retry: "إعادة المحاولة", note: "يُضاف السجل محليًا عند تحميل إطار اللعبة، وليس عند مجرد فتح الصفحة." }
+    : { fullscreen: "Fullscreen", start: "Start game", loading: "Loading game…", failed: "Game could not be loaded.", retry: "Retry", note: "Recent history is saved locally when the game frame loads, not on a page view alone." };
+
+  const recordLaunch = () => {
+    try {
+      const key = "playnova-recent";
+      const stored = JSON.parse(localStorage.getItem(key) || "[]") as unknown;
+      const entries = Array.isArray(stored) ? stored : [];
+      const next = [{ slug, launchedAt: new Date().toISOString() }, ...entries.filter((item) =>
+        typeof item === "object" && item !== null && "slug" in item && item.slug !== slug
+      )].slice(0, 20);
+      localStorage.setItem(key, JSON.stringify(next));
+    } catch {
+      // Private browsing or storage restrictions should not block gameplay.
+    }
+  };
 
   const start = () => {
     if (!safeUrl) {
@@ -70,7 +90,7 @@ export default function GamePlayer({ launch, title, unavailableText, emptyText }
       <div className="game-player-toolbar">
         <span>{started && loaded ? title : unavailableText}</span>
         <button type="button" onClick={fullscreen} disabled={!started || !loaded || !launch.permissions.fullscreen}>
-          ⛶ Fullscreen
+          ⛶ {labels.fullscreen}
         </button>
       </div>
       <div className="game-player-stage">
@@ -79,12 +99,12 @@ export default function GamePlayer({ launch, title, unavailableText, emptyText }
             <span className="game-player-icon" aria-hidden="true">▶</span>
             <strong>{emptyText}</strong>
             <button type="button" className="game-player-start" onClick={start} disabled={!safeUrl || launch.mode === "publisher-sdk"}>
-              {safeUrl ? "Start game" : unavailableText}
+              {safeUrl ? labels.start : unavailableText}
             </button>
           </div>
         )}
-        {started && !loaded && !failed && <div className="game-player-status" role="status">Loading game…</div>}
-        {failed && <div className="game-player-overlay" role="alert"><strong>Game could not be loaded.</strong><button type="button" className="game-player-start" onClick={retry}>Retry</button></div>}
+        {started && !loaded && !failed && <div className="game-player-status" role="status">{labels.loading}</div>}
+        {failed && <div className="game-player-overlay" role="alert"><strong>{labels.failed}</strong><button type="button" className="game-player-start" onClick={retry}>{labels.retry}</button></div>}
         {started && safeUrl && (
           <iframe
             key={safeUrl}
@@ -97,12 +117,12 @@ export default function GamePlayer({ launch, title, unavailableText, emptyText }
             allowFullScreen={launch.permissions.fullscreen}
             referrerPolicy="no-referrer"
             loading="lazy"
-            onLoad={() => setLoaded(true)}
+            onLoad={() => { setLoaded(true); recordLaunch(); }}
             onError={() => setFailed(true)}
           />
         )}
       </div>
-      <p className="game-player-security-note">{unavailableText}</p>
+      <p className="game-player-security-note">{labels.note}</p>
     </section>
   );
 }
