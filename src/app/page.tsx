@@ -17,7 +17,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return {
     title,
     description,
-    alternates: localizedAlternates("/"),
+    alternates: localizedAlternates("/", locale),
     openGraph: { type: "website", title, description, url: localizedUrl("/", locale) },
     twitter: { card: "summary", title, description },
     robots: { index: true, follow: true },
