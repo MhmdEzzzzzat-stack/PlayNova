@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getPublishedGame, getRelatedGames } from "@/lib/games";
 import { getLocale } from "@/lib/categories";
 import GamePlayer from "./player";
+import GameActions from "./actions";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -61,10 +62,7 @@ export default async function GamePage({ params, searchParams }: Props) {
         </nav>
         <div className="game-page-heading">
           <div><p className="directory-kicker">PlayNova</p><h1>{game.title[locale]}</h1><p>{game.description[locale]}</p></div>
-          <div className="game-page-actions">
-            <button type="button" disabled aria-label={text.favorite}>♡ {text.favorite}</button>
-            <button type="button" onClick="">{text.share}</button>
-          </div>
+          <GameActions slug={game.slug} title={game.title[locale]} favoriteLabel={text.favorite} shareLabel={text.share} />
         </div>
 
         <GamePlayer
