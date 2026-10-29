@@ -6,6 +6,7 @@ import { getLocale } from "@/lib/categories";
 import GamePlayer from "./player";
 import GameActions from "./actions";
 import {GameViewEvent} from "@/components/analytics-events";
+import { absoluteUrl, jsonLd, localizedAlternates, localizedUrl } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -30,7 +31,7 @@ export default async function GamePage({ params, searchParams }: Props) {
 
   const locale = getLocale(query.lang);
   const ar = locale === "ar";
-  const related = await getRelatedGames(game);
+  const related = await getRelatedGames(game);\n  const pagePath = `/games/${encodeURIComponent(game.slug)}`;\n  const breadcrumbData = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [\n    { "@type": "ListItem", position: 1, name: ar ? "الرئيسية" : "Home", item: absoluteUrl(`/?lang=${locale}`) },\n    { "@type": "ListItem", position: 2, name: ar ? "التصنيفات" : "Categories", item: absoluteUrl(`/categories?lang=${locale}`) },\n    { "@type": "ListItem", position: 3, name: game.title[locale], item: localizedUrl(pagePath, locale) },\n  ] };\n  const gameData = { "@context": "https://schema.org", "@type": "VideoGame", name: game.title[locale], description: game.description[locale], url: localizedUrl(pagePath, locale), inLanguage: locale, genre: game.categories, ...(game.thumbnail ? { image: absoluteUrl(game.thumbnail) } : {}) };
   const text = ar
     ? {
         home: "الرئيسية", categories: "التصنيفات", instructions: "طريقة اللعب",
