@@ -6,6 +6,7 @@ type Body={eventId?:unknown;type?:unknown;slug?:unknown;categoryId?:unknown;term
 const str=(v:unknown,max:number)=>typeof v==="string"?v.trim().slice(0,max):"";
 const response=(status:number,error?:string)=>NextResponse.json(error?{error}:{ok:true},{status,headers:{"Cache-Control":"no-store"}});
 export async function POST(request:NextRequest){
+ const length=Number(request.headers.get("content-length")||0);if(length>8192)return response(413,"Event payload too large.");
  let body:Body;try{body=await request.json() as Body;}catch{return response(400,"Invalid event payload.");}
  const type=str(body.type,32),eventId=str(body.eventId,80),sessionId=str(body.sessionId,80);
  if(!isAnalyticsEventType(type)||!isAnalyticsId(eventId)||!isAnalyticsId(sessionId,20,80))return response(400,"Invalid event.");
@@ -20,10 +21,11 @@ export async function POST(request:NextRequest){
  const failure=["timeout","network","blocked","provider","runtime","promise","server","unknown"].includes(str(body.failureCode,20))?str(body.failureCode,20):"";
  const source=str(body.sourceHost,120).toLowerCase().replace(/[^a-z0-9.-]/g,"");
  const db=await getPlayNovaDb();let gameId:string|null=null;
- if(slug){const game=await db.prepare("SELECT id FROM games WHERE slug=? AND status='published' AND license_status='approved'").bind(slug).first<{id:string}>();if(!game)return response(404,"Game not found.");gameId=game.id;}
+ if(slug){const game=await db.prepare("SELECT id FROM games WHERE slug=? AND status='published' AND license_status='approved' AND moderation_status='active'").bind(slug).first<{id:string}>();if(!game)return response(404,"Game not found.");gameId=game.id;}
  if(categoryId){const cat=await db.prepare("SELECT id FROM categories WHERE id=? AND visible=1").bind(categoryId).first<{id:string}>();if(!cat)return response(404,"Category not found.");}
  if(type==="search"&&!term)return response(400,"Search term required.");
  const sessionHash=createHash("sha256").update(sessionId).digest("hex");
+ const recent=await db.prepare("SELECT COUNT(*) AS total FROM analytics_events WHERE session_hash=? AND created_at>=datetime('now','-1 hour')").bind(sessionHash).first<{total:number}>();if((recent?.total||0)>=120)return response(429,"Analytics event rate limit reached.");
  try{
  const inserted=await db.prepare("INSERT OR IGNORE INTO analytics_events(event_id,event_type,game_id,category_id,search_term,search_results_count,source_host,device_type,session_hash,duration_ms,metric_name,metric_value,failure_code) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
  .bind(eventId,type,gameId,categoryId||null,term,body.searchResults===undefined?-1:resultsCount,source,device,sessionHash,body.durationMs===undefined?null:Math.round(duration),metricName,body.metricValue===undefined?null:metricValue,failure).run() as {meta?:{changes?:number}};
