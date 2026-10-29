@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowLeft, Gamepad2, Globe2, Search, Sparkles, Zap } from "lucide-react";
 
 const categories = ["الكل", "أكشن", "ألغاز", "سباق", "رياضة", "مغامرات"];
@@ -12,7 +13,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen pb-16">
       <header className="container flex items-center justify-between gap-4 py-6">
-        <a href="/" className="flex items-center gap-3" aria-label="PlayNova الصفحة الرئيسية">
+        <Link href="/" className="flex items-center gap-3" aria-label="PlayNova الصفحة الرئيسية">
           <span className="nova-gradient flex h-11 w-11 items-center justify-center rounded-2xl text-white shadow-glow">
             <Gamepad2 size={24} />
           </span>
@@ -20,7 +21,7 @@ export default function HomePage() {
             <span className="block text-xl font-black tracking-tight">Play<span className="text-violet-300">Nova</span></span>
             <span className="block text-xs text-violet-200/60">عالمك. لعبتك. مغامرتك.</span>
           </span>
-        </a>
+        </Link>
         <nav className="hidden items-center gap-7 text-sm text-violet-100/70 md:flex" aria-label="التنقل الرئيسي">
           <a className="transition hover:text-white" href="#discover">اكتشف الألعاب</a>
           <a className="transition hover:text-white" href="#categories">التصنيفات</a>
@@ -89,7 +90,7 @@ export default function HomePage() {
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((item, index) => (
+          {featured.map((item) => (
             <article key={item.title} className="panel group overflow-hidden rounded-2xl transition hover:-translate-y-1 hover:border-violet-300/30">
               <div className="game-placeholder relative flex aspect-[16/9] items-center justify-center overflow-hidden">
                 <span className="text-6xl text-violet-100/80 transition duration-300 group-hover:scale-110">{item.icon}</span>
