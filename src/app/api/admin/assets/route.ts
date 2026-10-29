@@ -31,7 +31,7 @@ export async function POST(request:NextRequest){
  if(gameId){const game=await db.prepare("SELECT id FROM games WHERE id=?").bind(gameId).first();if(!game)return bad("اللعبة المحددة غير موجودة.");}
  if(kind==="html5_package"&&!gameId)return bad("يجب ربط حزمة HTML5 بلعبة موجودة.");
  const bytes=new Uint8Array(await file.arrayBuffer());
- let inspected;try{inspected=inspectAsset(bytes,kind as AssetKind,file.type);}catch(e){return bad(e instanceof Error?e.message:"الملف غير صالح.");}
+ let inspected;try{inspected=inspectAsset(bytes,kind as AssetKind,file.type,file.name);}catch(e){return bad(e instanceof Error?e.message:"الملف غير صالح.");}
  const sha=await digest(bytes);
  const duplicate=await db.prepare("SELECT id,status FROM content_assets WHERE sha256=? AND size_bytes=? AND asset_type=? AND game_id IS ? AND status!='removed' LIMIT 1").bind(sha,bytes.byteLength,kind,gameId||null).first<{id:string;status:string}>();
  if(duplicate)return NextResponse.json({ok:true,duplicate:true,id:duplicate.id,status:duplicate.status});
