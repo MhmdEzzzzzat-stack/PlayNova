@@ -62,10 +62,12 @@ export default async function GamePage({ params, searchParams }: Props) {
         </nav>
         <div className="game-page-heading">
           <div><p className="directory-kicker">PlayNova</p><h1>{game.title[locale]}</h1><p>{game.description[locale]}</p></div>
-          <GameActions slug={game.slug} title={game.title[locale]} favoriteLabel={text.favorite} shareLabel={text.share} />
+          <GameActions slug={game.slug} title={game.title[locale]} favoriteLabel={text.favorite} shareLabel={text.share} locale={locale} />
         </div>
 
         <GamePlayer
+          slug={game.slug}
+          locale={locale}
           launch={game.launch}
           title={game.title[locale]}
           unavailableText={text.unavailable}
