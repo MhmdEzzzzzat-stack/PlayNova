@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 import AnalyticsConsent from "./analytics-consent";
 import SiteVitals from "./site-vitals";
+import { SITE_URL } from "@/lib/seo";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "PlayNova — العب واكتشف",
     template: "%s | PlayNova",
