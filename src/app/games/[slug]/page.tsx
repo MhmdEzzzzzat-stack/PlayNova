@@ -13,7 +13,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const game = getPublishedGame(slug);
+  const game = await getPublishedGame(slug);
   if (!game) return { title: "Game not found" };
   return {
     title: game.title.en,
@@ -29,7 +29,7 @@ export default async function GamePage({ params, searchParams }: Props) {
 
   const locale = getLocale(query.lang);
   const ar = locale === "ar";
-  const related = getRelatedGames(game);
+  const related = await getRelatedGames(game);
   const text = ar
     ? {
         home: "الرئيسية", categories: "التصنيفات", instructions: "طريقة اللعب",
