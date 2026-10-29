@@ -6,9 +6,9 @@ export function localizedUrl(path: string, locale: "ar" | "en") {
   return url.toString();
 }
 
-export function localizedAlternates(path: string) {
+export function localizedAlternates(path: string, locale: "ar" | "en" = "ar") {
   return {
-    canonical: localizedUrl(path, "ar"),
+    canonical: localizedUrl(path, locale),
     languages: {
       ar: localizedUrl(path, "ar"),
       en: localizedUrl(path, "en"),
