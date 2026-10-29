@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS analytics_events (
   game_id TEXT REFERENCES games(id) ON DELETE SET NULL,
   category_id TEXT REFERENCES categories(id) ON DELETE SET NULL,
   search_term TEXT NOT NULL DEFAULT '',
+  search_results_count INTEGER NOT NULL DEFAULT -1,
   source_host TEXT NOT NULL DEFAULT '',
   device_type TEXT NOT NULL DEFAULT 'unknown' CHECK(device_type IN ('mobile','desktop','tablet','unknown')),
   session_hash TEXT NOT NULL,
