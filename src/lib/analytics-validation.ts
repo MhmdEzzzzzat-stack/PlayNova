@@ -1,0 +1,4 @@
+export const ANALYTICS_EVENT_TYPES=["game_view","search","game_start","load_success","load_failure","favorite_add","favorite_remove","category_visit","session_end","web_vital","client_error","server_error"] as const;
+export function isAnalyticsEventType(value:unknown):value is typeof ANALYTICS_EVENT_TYPES[number]{return typeof value==="string"&&(ANALYTICS_EVENT_TYPES as readonly string[]).includes(value);}
+export function isAnalyticsId(value:unknown,min=12,max=80):value is string{return typeof value==="string"&&new RegExp("^[a-zA-Z0-9_-]{"+min+","+max+"}$").test(value);}
+export function validAnalyticsDate(value?:string){if(!value||!/^\d{4}-\d{2}-\d{2}$/.test(value))return null;const date=new Date(value+"T00:00:00Z");return !Number.isNaN(date.getTime())&&date.toISOString().slice(0,10)===value?value:null;}
