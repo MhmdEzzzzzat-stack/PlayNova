@@ -11,7 +11,7 @@ const sameOrigin=(r:NextRequest)=>{try{const o=r.headers.get("origin");return !!
 async function digest(bytes:Uint8Array){const hash=await crypto.subtle.digest("SHA-256",bytes);return [...new Uint8Array(hash)].map(x=>x.toString(16).padStart(2,"0")).join("");}
 function safeName(name:string){return name.normalize("NFKC").replace(/[^a-zA-Z0-9._-]/g,"_").slice(-100)||"upload";}
 export async function GET(){
- let actor;try{actor=await requireAdmin("reviewer");}catch{return no();}
+ try{await requireAdmin("reviewer");}catch{return no();}
  const db=await getPlayNovaDb();
  const rows=await db.prepare("SELECT a.*,g.slug AS game_slug,g.title_ar AS game_title FROM content_assets a LEFT JOIN games g ON g.id=a.game_id WHERE a.status!='removed' ORDER BY a.created_at DESC LIMIT 200").all();
  const usage=await db.prepare("SELECT COALESCE(SUM(size_bytes),0) AS bytes,COUNT(*) AS count FROM content_assets WHERE status!='removed'").first<{bytes:number;count:number}>();
