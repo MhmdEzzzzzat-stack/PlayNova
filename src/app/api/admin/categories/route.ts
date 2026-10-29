@@ -12,7 +12,7 @@ function validate(b:Input,partial=false){
  if((!partial||b.name_ar!==undefined)&&!str(b.name_ar,120))return "اسم التصنيف بالعربية مطلوب.";
  if((!partial||b.name_en!==undefined)&&!str(b.name_en,120))return "اسم التصنيف بالإنجليزية مطلوب.";
  if(b.visible!==undefined&&typeof b.visible!=="boolean")return "حالة الظهور غير صالحة.";
- if(b.sort_order!==undefined&&(!Number.isInteger(b.sort_order)||Number(b.sort_order)<0||Number(b.sort_order)>100000))return "ترتيب التصنيف غير صالح.";
+ if(b.sort_order!==undefined&&(typeof b.sort_order!=="number"||!Number.isInteger(b.sort_order)||b.sort_order<0||b.sort_order>100000))return "ترتيب التصنيف غير صالح.";
  return null;
 }
 export async function GET(){
