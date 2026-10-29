@@ -66,6 +66,7 @@ export default async function AdminOverview({ searchParams }: {
           <Link href="/admin/homepage">الصفحة الرئيسية</Link>
           <Link href="/admin/reports">البلاغات والإشراف</Link>
           <Link href="/admin/settings">الإعدادات</Link>
+          <Link href="/admin/users">إدارة المشرفين</Link>
         </nav>
         <div className="admin-session"><span>{admin.email}</span><small>{admin.role}</small></div>
       </aside>
