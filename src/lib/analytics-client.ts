@@ -7,7 +7,7 @@ export function trackAnalytics(type:AnalyticsType,data:{slug?:string;categoryId?
   if(!session){session=crypto.randomUUID();localStorage.setItem("playnova-analytics-session",session);}
   const payload={eventId:crypto.randomUUID(),sessionId:session,type,...data,device:matchMedia("(max-width: 767px)").matches?"mobile":/tablet|ipad/i.test(navigator.userAgent)?"tablet":"desktop",sourceHost:document.referrer?new URL(document.referrer).hostname:""};
   const body=JSON.stringify(payload);
-  if(type==="session_end"&&navigator.sendBeacon){navigator.sendBeacon("/api/analytics/events",new Blob([body],{type:"application/json"}));return;}
+  
   void fetch("/api/analytics/events",{method:"POST",headers:{"Content-Type":"application/json","X-PlayNova-Analytics-Consent":"granted"},body,keepalive:type==="session_end"}).catch(()=>{});
  }catch{/* Analytics must never interrupt the site experience. */}
 }
