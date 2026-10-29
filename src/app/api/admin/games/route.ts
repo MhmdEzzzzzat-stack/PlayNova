@@ -4,7 +4,6 @@ import { getPlayNovaDb } from "@/lib/db";
 
 type GameStatus = "draft" | "published" | "archived";
 type LicenseStatus = "pending" | "approved" | "rejected" | "expired";
-const rolesCanEdit: AdminRole[] = ["owner","administrator","editor"];
 const rolesCanPublish: AdminRole[] = ["owner","administrator"];
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const safeUrl = (v: unknown) => typeof v === "string" && v.length <= 2048 && /^https:\/\//i.test(v);
@@ -26,7 +25,7 @@ type GameInput = {
 function str(v:unknown,max=5000){return typeof v==="string"?v.trim().slice(0,max):"";}
 function validate(b:GameInput, partial=false){
  const slug=str(b.slug,100), titleAr=str(b.title_ar,180), titleEn=str(b.title_en,180);
- const launch=str(b.launch_url,2048), source=str(b.source_page_url,2048), origin=str(b.allowed_origin,255);
+ const launch=str(b.launch_url,2048), origin=str(b.allowed_origin,255);
  if((!partial||b.slug!==undefined)&&!slugPattern.test(slug)) return "معرّف اللعبة غير صالح.";
  if((!partial||b.title_ar!==undefined)&&!titleAr) return "اسم اللعبة بالعربية مطلوب.";
  if((!partial||b.title_en!==undefined)&&!titleEn) return "اسم اللعبة بالإنجليزية مطلوب.";
@@ -40,14 +39,7 @@ function validate(b:GameInput, partial=false){
  if(b.featured!==undefined&&typeof b.featured!=="boolean") return "قيمة المميزة غير صالحة.";
  return null;
 }
-function validateLegacy(b:GameInput){
- if(!["hosted-html5","authorized-embed","publisher-sdk"].includes(str(b.launch_mode))) return "طريقة تشغيل اللعبة غير صالحة.";
- if(!["pending","approved","rejected","expired"].includes(str(b.license_status,"20")||"pending")) return "حالة الترخيص غير صالحة.";
- if(b.status!==undefined&&!["draft","published","archived"].includes(str(b.status))) return "حالة اللعبة غير صالحة.";
- if(b.category_ids!==undefined&&(!Array.isArray(b.category_ids)||b.category_ids.length>10||b.category_ids.some(x=>typeof x!=="string"||x.length>80))) return "قائمة التصنيفات غير صالحة.";
- if(b.featured!==undefined&&typeof b.featured!=="boolean") return "قيمة المميزة غير صالحة.";
- return null;
-}
+
 export async function GET(){
  let actor;try{actor=await requireAdmin("editor");}catch{return denied();}
  const db=await getPlayNovaDb();
