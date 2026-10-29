@@ -43,7 +43,7 @@ function validate(b:GameInput, partial=false){
 export async function GET(){
  let actor;try{actor=await requireAdmin("editor");}catch{return denied();}
  const db=await getPlayNovaDb();
- const result=await db.prepare(`SELECT g.id,g.slug,g.title_ar,g.title_en,g.source_name,g.launch_url,g.license_status,g.authorization_reference,g.status,g.featured,g.updated_at,
+ const result=await db.prepare(`SELECT g.*,
  (SELECT GROUP_CONCAT(category_id, ',') FROM game_categories gc WHERE gc.game_id=g.id) AS category_ids
  FROM games g ORDER BY g.updated_at DESC`).all<Record<string,unknown>>();
  return NextResponse.json({games:result.results},{headers:{"Cache-Control":"no-store"}});
