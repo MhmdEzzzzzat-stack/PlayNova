@@ -1,13 +1,9 @@
 import "server-only";
+import { getPlayNovaDb } from "@/lib/db";
 
 export type GameLocale = "ar" | "en";
 export type LaunchMode = "hosted-html5" | "authorized-embed" | "publisher-sdk";
-export type GamePermissions = {
-  fullscreen: boolean;
-  pointerLock: boolean;
-  orientationLock: boolean;
-};
-
+export type GamePermissions = { fullscreen: boolean; pointerLock: boolean; orientationLock: boolean };
 export type PublishedGame = {
   slug: string;
   title: Record<GameLocale, string>;
@@ -18,47 +14,76 @@ export type PublishedGame = {
   tags: string[];
   thumbnail?: string;
   launch: {
-    mode: LaunchMode;
-    url: string;
-    allowedOrigin: string;
-    permissions: GamePermissions;
-    authorizationReference: string;
+    mode: LaunchMode; url: string; allowedOrigin: string;
+    permissions: GamePermissions; authorizationReference: string;
   };
 };
 
-// Empty by design: add only reviewed, published and properly licensed game records.
-// Never populate this registry from user-submitted URLs.
-const publishedGames: PublishedGame[] = [];
+type GameRow = {
+  slug: string; title_ar: string; title_en: string; description_ar: string; description_en: string;
+  instructions_ar: string; instructions_en: string; controls_ar: string; controls_en: string;
+  thumbnail_url: string | null; launch_mode: LaunchMode; launch_url: string; allowed_origin: string;
+  authorization_reference: string; permissions_fullscreen: number; permissions_pointer_lock: number;
+  permissions_orientation_lock: number; categories: string | null; tags: string | null;
+};
 
-export function getPublishedGame(slug: string) {
-  return publishedGames.find((game) => game.slug === slug);
+const mapGame = (row: GameRow): PublishedGame => ({
+  slug: row.slug,
+  title: { ar: row.title_ar, en: row.title_en },
+  description: { ar: row.description_ar, en: row.description_en },
+  instructions: { ar: row.instructions_ar, en: row.instructions_en },
+  controls: { ar: row.controls_ar, en: row.controls_en },
+  categories: row.categories ? row.categories.split(",") : [],
+  tags: row.tags ? row.tags.split(",") : [],
+  ...(row.thumbnail_url ? { thumbnail: row.thumbnail_url } : {}),
+  launch: {
+    mode: row.launch_mode, url: row.launch_url, allowedOrigin: row.allowed_origin,
+    authorizationReference: row.authorization_reference,
+    permissions: {
+      fullscreen: Boolean(row.permissions_fullscreen),
+      pointerLock: Boolean(row.permissions_pointer_lock),
+      orientationLock: Boolean(row.permissions_orientation_lock),
+    },
+  },
+});
+
+const SELECT_PUBLISHED = `
+SELECT g.*,
+  (SELECT group_concat(gc.category_id) FROM game_categories gc WHERE gc.game_id = g.id) AS categories,
+  (SELECT group_concat(gt.tag) FROM game_tags gt WHERE gt.game_id = g.id) AS tags
+FROM games g
+WHERE g.status = 'published' AND g.license_status = 'approved'
+  AND length(trim(g.authorization_reference)) > 0
+`;
+
+export async function getPublishedGame(slug: string): Promise<PublishedGame | undefined> {
+  const db = await getPlayNovaDb();
+  const row = await db.prepare(`${SELECT_PUBLISHED} AND g.slug = ? LIMIT 1`).bind(slug).first<GameRow>();
+  return row ? mapGame(row) : undefined;
 }
 
-export function getRelatedGames(game: PublishedGame, limit = 4) {
-  return publishedGames
-    .filter((candidate) => candidate.slug !== game.slug)
-    .map((candidate) => ({
-      game: candidate,
-      score:
-        candidate.categories.filter((item) => game.categories.includes(item)).length * 3 +
-        candidate.tags.filter((item) => game.tags.includes(item)).length,
-    }))
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
-    .map((item) => item.game);
+export async function getPublishedGames(): Promise<PublishedGame[]> {
+  const db = await getPlayNovaDb();
+  const result = await db.prepare(`${SELECT_PUBLISHED} ORDER BY g.featured DESC, g.published_at DESC`).all<GameRow>();
+  return result.results.map(mapGame);
+}
+
+export async function getRelatedGames(game: PublishedGame, limit = 4): Promise<PublishedGame[]> {
+  const all = await getPublishedGames();
+  return all.filter((candidate) => candidate.slug !== game.slug)
+    .map((candidate) => ({ game: candidate, score:
+      candidate.categories.filter((item) => game.categories.includes(item)).length * 3 +
+      candidate.tags.filter((item) => game.tags.includes(item)).length }))
+    .filter((item) => item.score > 0).sort((a, b) => b.score - a.score)
+    .slice(0, limit).map((item) => item.game);
 }
 
 export function validateGameLaunch(game: PublishedGame) {
   try {
     const url = new URL(game.launch.url);
     const allowedOrigin = new URL(game.launch.allowedOrigin);
-    if (url.protocol !== "https:" || allowedOrigin.protocol !== "https:") return false;
-    if (url.origin !== allowedOrigin.origin) return false;
-    if (!game.launch.authorizationReference.trim()) return false;
-    if (!["hosted-html5", "authorized-embed", "publisher-sdk"].includes(game.launch.mode)) return false;
-    return true;
-  } catch {
-    return false;
-  }
+    return url.protocol === "https:" && allowedOrigin.protocol === "https:" &&
+      url.origin === allowedOrigin.origin && Boolean(game.launch.authorizationReference.trim()) &&
+      ["hosted-html5", "authorized-embed", "publisher-sdk"].includes(game.launch.mode);
+  } catch { return false; }
 }
