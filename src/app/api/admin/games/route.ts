@@ -41,7 +41,7 @@ function validate(b:GameInput, partial=false){
 }
 
 export async function GET(){
- let actor;try{actor=await requireAdmin("editor");}catch{return denied();}
+ try{await requireAdmin("editor");}catch{return denied();}
  const db=await getPlayNovaDb();
  const result=await db.prepare(`SELECT g.*,
  (SELECT GROUP_CONCAT(category_id, ',') FROM game_categories gc WHERE gc.game_id=g.id) AS category_ids
@@ -82,7 +82,7 @@ export async function PATCH(request:NextRequest){
  const status=(b.status??existing.status) as GameStatus, license=(b.license_status??existing.license_status) as LicenseStatus;
  const auth=str(b.authorization_reference,500)||existing.authorization_reference;
  const evidence=b.rights_evidence_url===undefined?existing.rights_evidence_url:str(b.rights_evidence_url,2048);
- if(status==="published"&&(!rolesCanPublish.includes(actor.role)||license!=="approved"||!auth||!safeUrl(evidence)))return bad("النشر يتطلب مديرًا أو مالكًا وموافقة الترخيص وإثبات HTTPS.");
+ if(status==="published"&&((b.status==="published"&&existing.status!=="published"&&!rolesCanPublish.includes(actor.role))||license!=="approved"||!auth||!safeUrl(evidence)))return bad("النشر يتطلب مديرًا أو مالكًا وموافقة الترخيص وإثبات HTTPS.");
  const fields=["slug","title_ar","title_en","description_ar","description_en","instructions_ar","instructions_en","controls_ar","controls_en","thumbnail_url","source_name","source_page_url","launch_url","allowed_origin","launch_mode","license_type","license_status","authorization_reference","authorization_notes","rights_holder","rights_expires_at","rights_evidence_url","status","featured","mobile_support","orientation","permissions_fullscreen","permissions_pointer_lock","permissions_orientation_lock"];
  const values:unknown[]=[];const sets:string[]=[];
  for(const key of fields){if(b[key as keyof GameInput]!==undefined){sets.push(key+"=?");const v=b[key as keyof GameInput];values.push(["featured","mobile_support","permissions_fullscreen","permissions_pointer_lock","permissions_orientation_lock"].includes(key)?(v===true?1:0):key==="thumbnail_url"?(str(v,2048)||null):key==="rights_expires_at"?(str(v,30)||null):str(v,key.startsWith("description")||key.startsWith("instructions")||key.startsWith("controls")?5000:2048));}}
