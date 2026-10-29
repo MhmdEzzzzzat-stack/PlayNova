@@ -6,7 +6,7 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
-  "assets": {
+  "d1_databases": [\n    {\n      "binding": "DB",\n      "database_name": "playnova-db",\n      "database_id": "REPLACE_WITH_CLOUDFLARE_D1_DATABASE_ID",\n      "migrations_dir": "migrations"\n    }\n  ],\n  "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
