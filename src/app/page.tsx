@@ -200,7 +200,7 @@ export default function HomePage() {
       <section id="categories" className="container category-section">
         <div className="section-heading"><div><p className="section-kicker">{t.browse}</p><h2 className="section-title">{t.categories}</h2></div></div>
         <div className="category-list">
-          <Link href="/categories" className="category-chip">{t.all}</Link>
+          <Link href={"/categories?lang=" + locale} className="category-chip">{t.all}</Link>
           {categories.map((item) => { const Icon = item.icon; return <Link key={item.id} href={"/categories/" + item.id + "?lang=" + locale} className="category-chip"><Icon size={16} />{item[locale]}</Link>; })}
         </div>
       </section>
@@ -235,7 +235,7 @@ export default function HomePage() {
 
       <footer className="container site-footer">
         <div className="footer-brand"><strong>Play<span>Nova</span></strong><p>{t.footer}</p><small>© {new Date().getFullYear()} PlayNova.</small></div>
-        <div className="footer-links"><h3>{t.useful}</h3><span>{t.about}</span><span>{t.contact} · {t.coming}</span><span>{t.privacy} · {t.coming}</span><span>{t.terms} · {t.coming}</span><span>{t.copyright} · {t.coming}</span></div>
+        <div className="footer-links"><h3>{t.useful}</h3><a href="#about">{t.about}</a><span>{t.contact} · {t.coming}</span><Link href={"/privacy?lang=" + locale}>{t.privacy}</Link><Link href={"/favorites?lang=" + locale}>{isArabic ? "المفضلة" : "Favorites"}</Link><Link href={"/recent?lang=" + locale}>{isArabic ? "تم تشغيلها مؤخرًا" : "Recently launched"}</Link><span>{t.terms} · {t.coming}</span><span>{t.copyright} · {t.coming}</span></div>
       </footer>
     </main>
   );
