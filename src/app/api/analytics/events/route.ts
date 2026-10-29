@@ -1,7 +1,7 @@
 import {NextRequest,NextResponse} from "next/server";
 import {createHash} from "node:crypto";
 import {getPlayNovaDb} from "@/lib/db";
-const TYPES=["game_view","search","game_start","load_success","load_failure","favorite_add","favorite_remove","category_visit","session_end","web_vital"] as const;
+const TYPES=["game_view","search","game_start","load_success","load_failure","favorite_add","favorite_remove","category_visit","session_end","web_vital","client_error","server_error"] as const;
 type EventType=typeof TYPES[number];
 type Body={eventId?:unknown;type?:unknown;slug?:unknown;categoryId?:unknown;term?:unknown;sourceHost?:unknown;device?:unknown;durationMs?:unknown;metricName?:unknown;metricValue?:unknown;failureCode?:unknown;sessionId?:unknown};
 const str=(v:unknown,max:number)=>typeof v==="string"?v.trim().slice(0,max):"";
