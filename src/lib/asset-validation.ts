@@ -3,11 +3,12 @@ export type AssetInspection={extension:string;contentType:string;expandedBytes:n
 const imageTypes:Record<string,{mime:string;ext:string}>={ "image/jpeg":{mime:"image/jpeg",ext:"jpg"},"image/png":{mime:"image/png",ext:"png"},"image/webp":{mime:"image/webp",ext:"webp"} };
 function u16(v:DataView,o:number){return v.getUint16(o,true);}
 function u32(v:DataView,o:number){return v.getUint32(o,true);}
-export function inspectAsset(bytes:Uint8Array,kind:AssetKind,declaredType:string):AssetInspection{
+export function inspectAsset(bytes:Uint8Array,kind:AssetKind,declaredType:string,filename="") :AssetInspection{
  if(!bytes.length)throw new Error("الملف فارغ.");
  if(kind==="thumbnail"||kind==="screenshot"){
   if(bytes.length>8*1024*1024)throw new Error("الحد الأقصى للصورة 8 ميجابايت.");
   const type=declaredType.toLowerCase(),allowed=imageTypes[type];if(!allowed)throw new Error("الصيغ المدعومة للصور: JPG وPNG وWebP فقط.");
+  if(filename&&!filename.toLowerCase().endsWith("."+allowed.ext)&&!(allowed.ext==="jpg"&&filename.toLowerCase().endsWith(".jpeg")))throw new Error("امتداد اسم الملف لا يطابق نوع الصورة.");
   const b=bytes;
   const valid=type==="image/jpeg"?b[0]===0xff&&b[1]===0xd8&&b[2]===0xff:
    type==="image/png"?b.length>=8&&b[0]===0x89&&b[1]===0x50&&b[2]===0x4e&&b[3]===0x47&&b[4]===0x0d&&b[5]===0x0a&&b[6]===0x1a&&b[7]===0x0a:
@@ -17,6 +18,7 @@ export function inspectAsset(bytes:Uint8Array,kind:AssetKind,declaredType:string
  }
  if(kind!=="html5_package")throw new Error("نوع الملف غير مدعوم.");
  if(bytes.length>50*1024*1024)throw new Error("الحد الأقصى لحزمة اللعبة المضغوطة 50 ميجابايت.");
+ if(filename&&!filename.toLowerCase().endsWith(".zip"))throw new Error("امتداد حزمة الألعاب يجب أن يكون ZIP.");
  if(declaredType!=="application/zip"&&declaredType!=="application/x-zip-compressed"&&declaredType!=="")throw new Error("حزم الألعاب يجب أن تكون ZIP.");
  const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
  const min=Math.max(0,bytes.length-65557);let eocd=-1;
