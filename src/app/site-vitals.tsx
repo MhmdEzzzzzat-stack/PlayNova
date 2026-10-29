@@ -2,7 +2,7 @@
 import {useEffect} from "react";
 import {trackAnalytics} from "@/lib/analytics-client";
 export default function SiteVitals(){useEffect(()=>{
- if(localStorage.getItem("playnova-analytics-consent")!=="granted")return;
+ try{if(localStorage.getItem("playnova-analytics-consent")!=="granted")return;}catch{return;}
  const observers:PerformanceObserver[]=[],latest:Record<string,number>={};
  const observe=(type:string,cb:(list:PerformanceObserverEntryList)=>void)=>{try{const o=new PerformanceObserver(list=>cb(list));o.observe({type,buffered:true});observers.push(o);}catch{}};
  observe("largest-contentful-paint",list=>{const e=list.getEntries()[list.getEntries().length-1];if(e)latest.LCP=e.startTime;});
