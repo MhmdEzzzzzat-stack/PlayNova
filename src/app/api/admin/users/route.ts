@@ -15,7 +15,7 @@ function validRole(value: unknown): value is AdminRole {
 }
 function forbidden() { return NextResponse.json({ error: "غير مصرح لك بتنفيذ هذا الإجراء." }, { status: 403 }); }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const actor = await requireAdmin("administrator");
     const db = await getPlayNovaDb();
