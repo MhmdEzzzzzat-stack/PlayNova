@@ -59,6 +59,7 @@ export async function PATCH(request:NextRequest){
  }
  const status=decision==="approve"?"approved":"rejected",notes=typeof body.notes==="string"?body.notes.slice(0,2000):"";
  await db.prepare("UPDATE content_assets SET status=?,review_notes=?,reviewed_by=?,reviewed_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(status,notes,actor.email,id).run();
+ if(status==="approved"&&asset.asset_type==="thumbnail"&&asset.game_id)await db.prepare("UPDATE games SET thumbnail_url=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind("/api/assets/"+id,asset.game_id).run();
  await db.prepare("INSERT INTO admin_audit_log_v2(actor_email,actor_role,action,entity_type,entity_id,details_json) VALUES(?,?, ?, 'asset',?,?)").bind(actor.email,actor.role,"asset_"+status,id,JSON.stringify({notes})).run();
  return NextResponse.json({ok:true,status});
 }
@@ -79,6 +80,7 @@ export async function DELETE(request:NextRequest){
  if(asset.status==="published")return bad("لا يمكن حذف ملف منشور من هنا؛ أوقف نشره أولًا.");
  try{await store.delete(asset.storage_key);}catch{return NextResponse.json({error:"تعذر حذف الملف من R2؛ لم يتم تغيير السجل."},{status:503});}
  await db.prepare("UPDATE content_assets SET status='removed',updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(id).run();
+ await db.prepare("UPDATE games SET thumbnail_url=NULL,updated_at=CURRENT_TIMESTAMP WHERE thumbnail_url=?").bind("/api/assets/"+id).run();
  await db.prepare("INSERT INTO admin_audit_log_v2(actor_email,actor_role,action,entity_type,entity_id) VALUES(?,?, 'asset_removed','asset',?)").bind(actor.email,actor.role,id).run();
  return NextResponse.json({ok:true});
 }
