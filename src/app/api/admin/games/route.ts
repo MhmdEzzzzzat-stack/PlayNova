@@ -24,12 +24,23 @@ type GameInput = {
  permissions_orientation_lock?:unknown; mobile_support?:unknown; orientation?:unknown;
 };
 function str(v:unknown,max=5000){return typeof v==="string"?v.trim().slice(0,max):"";}
-function validate(b:GameInput){
+function validate(b:GameInput, partial=false){
  const slug=str(b.slug,100), titleAr=str(b.title_ar,180), titleEn=str(b.title_en,180);
  const launch=str(b.launch_url,2048), source=str(b.source_page_url,2048), origin=str(b.allowed_origin,255);
- if(!slugPattern.test(slug)||!titleAr||!titleEn||!str(b.source_name,160)||!safeUrl(launch)||!safeUrl(source)||!safeUrl(origin)) return "تحقق من الرابط والعنوان والاسم والمعرّف. يجب استخدام روابط HTTPS.";
- let parsed:URL; try{parsed=new URL(launch);}catch{return "رابط تشغيل اللعبة غير صالح.";}
- if(parsed.origin!==origin) return "النطاق المسموح يجب أن يطابق نطاق رابط التشغيل.";
+ if((!partial||b.slug!==undefined)&&!slugPattern.test(slug)) return "معرّف اللعبة غير صالح.";
+ if((!partial||b.title_ar!==undefined)&&!titleAr) return "اسم اللعبة بالعربية مطلوب.";
+ if((!partial||b.title_en!==undefined)&&!titleEn) return "اسم اللعبة بالإنجليزية مطلوب.";
+ if((!partial||b.source_name!==undefined)&&!str(b.source_name,160)) return "اسم المصدر مطلوب.";
+ for(const [key,value] of [["رابط التشغيل",b.launch_url],["رابط المصدر",b.source_page_url],["النطاق المسموح",b.allowed_origin]] as const) if(value!==undefined&&!safeUrl(value)) return key+" يجب أن يكون رابط HTTPS.";
+ if(b.launch_url!==undefined&&b.allowed_origin!==undefined){let parsed:URL;try{parsed=new URL(launch);}catch{return "رابط تشغيل اللعبة غير صالح.";}if(parsed.origin!==origin)return "النطاق المسموح يجب أن يطابق نطاق رابط التشغيل.";}
+ if(b.launch_mode!==undefined&&!["hosted-html5","authorized-embed","publisher-sdk"].includes(str(b.launch_mode))) return "طريقة تشغيل اللعبة غير صالحة.";
+ if(b.license_status!==undefined&&!["pending","approved","rejected","expired"].includes(str(b.license_status))) return "حالة الترخيص غير صالحة.";
+ if(b.status!==undefined&&!["draft","published","archived"].includes(str(b.status))) return "حالة اللعبة غير صالحة.";
+ if(b.category_ids!==undefined&&(!Array.isArray(b.category_ids)||b.category_ids.length>10||b.category_ids.some(x=>typeof x!=="string"||x.length>80))) return "قائمة التصنيفات غير صالحة.";
+ if(b.featured!==undefined&&typeof b.featured!=="boolean") return "قيمة المميزة غير صالحة.";
+ return null;
+}
+function validateLegacy(b:GameInput){
  if(!["hosted-html5","authorized-embed","publisher-sdk"].includes(str(b.launch_mode))) return "طريقة تشغيل اللعبة غير صالحة.";
  if(!["pending","approved","rejected","expired"].includes(str(b.license_status,"20")||"pending")) return "حالة الترخيص غير صالحة.";
  if(b.status!==undefined&&!["draft","published","archived"].includes(str(b.status))) return "حالة اللعبة غير صالحة.";
@@ -52,6 +63,7 @@ export async function POST(request:NextRequest){
  const error=validate(b);if(error)return bad(error);
  const status=(b.status??"draft") as GameStatus;
  const license=(b.license_status??"pending") as LicenseStatus;
+ if(actor.role==="editor"&&license!=="pending")return denied();
  const auth=str(b.authorization_reference,500);
  if(status==="published"&&(!rolesCanPublish.includes(actor.role)||license!=="approved"||!auth||!str(b.rights_evidence_url,2048)||!safeUrl(b.rights_evidence_url)))return bad("لا يمكن النشر دون صلاحية مدير/مالك وموافقة الترخيص ورابط إثبات HTTPS ورقم تفويض.");
  const db=await getPlayNovaDb(),id=str(b.id,100)||crypto.randomUUID(),now=new Date().toISOString();
@@ -71,15 +83,16 @@ export async function PATCH(request:NextRequest){
  let b:GameInput;try{b=await request.json();}catch{return bad("بيانات غير صالحة.");}
  const id=str(b.id,100);if(!id)return bad("معرّف اللعبة مطلوب.");
  const db=await getPlayNovaDb();
- const existing=await db.prepare("SELECT id,status,license_status,authorization_reference FROM games WHERE id=?").bind(id).first<{id:string;status:GameStatus;license_status:LicenseStatus;authorization_reference:string}>();
+ const existing=await db.prepare("SELECT id,status,license_status,authorization_reference,rights_evidence_url FROM games WHERE id=?").bind(id).first<{id:string;status:GameStatus;license_status:LicenseStatus;authorization_reference:string;rights_evidence_url:string}>();
  if(!existing)return NextResponse.json({error:"اللعبة غير موجودة."},{status:404});
- const error=validate({...b,status:b.status??existing.status,license_status:b.license_status??existing.license_status});if(error)return bad(error);
+ const error=validate(b,true);if(error)return bad(error);
+ if(actor.role==="editor"&&b.license_status!==undefined)return denied();
  const status=(b.status??existing.status) as GameStatus, license=(b.license_status??existing.license_status) as LicenseStatus;
  const auth=str(b.authorization_reference,500)||existing.authorization_reference;
- if(status==="published"&&(!rolesCanPublish.includes(actor.role)||license!=="approved"||!auth||!safeUrl(b.rights_evidence_url)))return bad("النشر يتطلب مديرًا أو مالكًا وموافقة الترخيص وإثبات HTTPS.");
+ const evidence=b.rights_evidence_url===undefined?existing.rights_evidence_url:str(b.rights_evidence_url,2048);
+ if(status==="published"&&(!rolesCanPublish.includes(actor.role)||license!=="approved"||!auth||!safeUrl(evidence)))return bad("النشر يتطلب مديرًا أو مالكًا وموافقة الترخيص وإثبات HTTPS.");
  const fields=["slug","title_ar","title_en","description_ar","description_en","instructions_ar","instructions_en","controls_ar","controls_en","thumbnail_url","source_name","source_page_url","launch_url","allowed_origin","launch_mode","license_type","license_status","authorization_reference","authorization_notes","rights_holder","rights_expires_at","rights_evidence_url","status","featured","mobile_support","orientation","permissions_fullscreen","permissions_pointer_lock","permissions_orientation_lock"];
  const values:unknown[]=[];const sets:string[]=[];
- const map:Record<string,string>={featured:"featured",mobile_support:"mobile_support",permissions_fullscreen:"permissions_fullscreen",permissions_pointer_lock:"permissions_pointer_lock",permissions_orientation_lock:"permissions_orientation_lock"};
  for(const key of fields){if(b[key as keyof GameInput]!==undefined){sets.push(key+"=?");const v=b[key as keyof GameInput];values.push(["featured","mobile_support","permissions_fullscreen","permissions_pointer_lock","permissions_orientation_lock"].includes(key)?(v===true?1:0):key==="thumbnail_url"?(str(v,2048)||null):key==="rights_expires_at"?(str(v,30)||null):str(v,key.startsWith("description")||key.startsWith("instructions")||key.startsWith("controls")?5000:2048));}}
  if(status==="published"&&existing.status!=="published") {sets.push("published_at=?");values.push(new Date().toISOString());}
  if(status!=="published"){sets.push("published_at=NULL");}
