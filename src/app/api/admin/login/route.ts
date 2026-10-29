@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminSession, verifyAdminPassword, COOKIE_NAME } from "@/lib/admin-auth";
 import { getPlayNovaDb } from "@/lib/db";
 
-export const runtime = "edge";
 
 function sameOrigin(request: NextRequest): boolean {
   const origin = request.headers.get("origin");
