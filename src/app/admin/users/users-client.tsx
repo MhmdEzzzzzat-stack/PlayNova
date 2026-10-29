@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 type Role = "owner"|"administrator"|"editor"|"reviewer";
 type User = {email:string;role:Role;active:number;created_at:string;updated_at:string};
@@ -22,7 +22,7 @@ export default function AdminUsersClient() {
    <input required type="email" placeholder="البريد الإلكتروني" value={email} onChange={e=>setEmail(e.target.value)} style={field}/>
    <input required type="password" minLength={12} maxLength={128} placeholder="كلمة مرور مؤقتة (12+)" value={password} onChange={e=>setPassword(e.target.value)} style={field}/>
    <select value={role} onChange={e=>setRole(e.target.value as Role)} style={field}><option value="editor">محرر</option><option value="reviewer">مراجع</option><option value="administrator">مدير</option><option value="owner">مالك</option></select>
-   <button disabled={busy} type="submit" className="admin-primary">{busy?"جارٍ الإنشاء...":"إنشاء الحساب"}</button>
+   <button disabled={busy} type="submit" className="admin-secondary">{busy?"جارٍ الإنشاء...":"إنشاء الحساب"}</button>
   </form><p style={{color:"#aaa5c3",fontSize:12,marginTop:10}}>كلمات المرور لا تُعرض بعد الحفظ. شارك كلمة المرور المؤقتة عبر قناة آمنة واطلب تغييرها خارج النظام قبل الاستخدام الفعلي.</p></section>
   <section className="admin-card"><h2 style={{fontSize:19,fontWeight:800,marginBottom:16}}>الحسابات الحالية</h2>{users.length===0?<p className="admin-empty">لا توجد حسابات للعرض.</p>:<div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>البريد</th><th>الدور</th><th>الحالة</th><th>تغيير الدور</th><th>إجراء</th></tr></thead><tbody>{users.map(u=><tr key={u.email}><td>{u.email}</td><td>{roleNames[u.role]}</td><td>{u.active?"نشط":"معطل"}</td><td><select value={u.role} onChange={e=>update(u,{role:e.target.value as Role})} style={field}><option value="editor">محرر</option><option value="reviewer">مراجع</option><option value="administrator">مدير</option><option value="owner">مالك</option></select></td><td><button type="button" className="admin-secondary" onClick={()=>update(u,{active:!u.active})}>{u.active?"تعطيل":"تفعيل"}</button></td></tr>)}</tbody></table></div>}</section>
   {error&&<p role="alert" style={{color:"#fca5a5"}}>{error}</p>}{notice&&<p role="status" style={{color:"#86efac"}}>{notice}</p>}
