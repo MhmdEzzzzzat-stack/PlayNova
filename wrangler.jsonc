@@ -6,7 +6,15 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
-  "d1_databases": [\n    {\n      "binding": "DB",\n      "database_name": "playnova-db",\n      "database_id": "REPLACE_WITH_CLOUDFLARE_D1_DATABASE_ID",\n      "migrations_dir": "migrations"\n    }\n  ],\n  "assets": {
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "playnova-db",
+      "database_id": "212f26b4-8273-45c2-a604-c83608df507e",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
