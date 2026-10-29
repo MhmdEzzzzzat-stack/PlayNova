@@ -36,6 +36,12 @@ export function inspectAsset(bytes:Uint8Array,kind:AssetKind,declaredType:string
   if(!name||name.includes("\0")||name.includes("\\")||name.startsWith("/")||/^[a-zA-Z]:/.test(name)||name.split("/").some(p=>p===".."||p==="."))throw new Error("مسار خطر داخل الأرشيف.");
   const normalized=name.replace(/\/$/,"");if(seen.has(normalized))throw new Error("الأرشيف يحتوي على مسارات مكررة.");seen.add(normalized);
   const unixMode=external>>>16;if(((unixMode&0xf000)===0xa000))throw new Error("روابط ZIP الرمزية غير مسموحة.");
+  const localOffset=u32(view,cursor+42);
+  if(localOffset+30>centralOffset||u32(view,localOffset)!==0x04034b50)throw new Error("رأس ملف ZIP المحلي غير صالح.");
+  const localNameLen=u16(view,localOffset+26),localExtraLen=u16(view,localOffset+28);
+  if(localOffset+30+localNameLen+localExtraLen+compressed>centralOffset)throw new Error("بيانات ملف ZIP المحلي خارج حدود الأرشيف.");
+  const localName=new TextDecoder("utf-8",{fatal:true}).decode(bytes.slice(localOffset+30,localOffset+30+localNameLen));
+  if(localName!==name||u16(view,localOffset+6)!==flags||u16(view,localOffset+8)!==method)throw new Error("بيانات رأس ZIP المحلي لا تطابق الدليل المركزي.");
   const isDir=name.endsWith("/");if(!isDir){expanded+=uncompressed;if(uncompressed>100*1024*1024||expanded>150*1024*1024)throw new Error("الحجم بعد فك الضغط يتجاوز الحد المسموح.");if(compressed===0&&uncompressed>0||compressed>0&&uncompressed/compressed>100)throw new Error("نسبة ضغط غير طبيعية في الأرشيف.");if(normalized.toLowerCase()==="index.html")hasIndex=true;}
   cursor=end;
  }
