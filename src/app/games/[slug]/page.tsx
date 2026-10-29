@@ -5,6 +5,7 @@ import { getPublishedGame, getRelatedGames } from "@/lib/games";
 import { getLocale } from "@/lib/categories";
 import GamePlayer from "./player";
 import GameActions from "./actions";
+import {GameViewEvent} from "@/components/analytics-events";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -54,6 +55,7 @@ export default async function GamePage({ params, searchParams }: Props) {
 
   return (
     <main className="game-page" dir={ar ? "rtl" : "ltr"} lang={locale}>
+      <GameViewEvent slug={game.slug} />
       <div className="game-page-container">
         <nav className="game-breadcrumbs" aria-label={ar ? "مسار التنقل" : "Breadcrumb"}>
           <Link href="/">{text.home}</Link><span>/</span>
