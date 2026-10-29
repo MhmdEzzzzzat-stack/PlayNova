@@ -1,0 +1,49 @@
+"use client";
+import {useEffect,useState,type FormEvent} from "react";
+type Category={id:string;name_ar:string;name_en:string};
+type Game={id:string;slug:string;title_ar:string;title_en:string;source_name:string;launch_url:string;license_status:string;authorization_reference:string;status:string;featured:number;updated_at:string;category_ids:string|null};
+const blank={slug:"",title_ar:"",title_en:"",description_ar:"",description_en:"",instructions_ar:"",instructions_en:"",controls_ar:"",controls_en:"",thumbnail_url:"",source_name:"",source_page_url:"",launch_url:"",allowed_origin:"",launch_mode:"authorized-embed",license_type:"pending",license_status:"pending",authorization_reference:"",authorization_notes:"",rights_holder:"",rights_expires_at:"",rights_evidence_url:"",status:"draft",featured:false,category_ids:[] as string[],permissions_fullscreen:false,permissions_pointer_lock:false,permissions_orientation_lock:false,mobile_support:false,orientation:"any"};
+const input={width:"100%",minHeight:42,border:"1px solid rgba(196,181,253,.2)",borderRadius:10,background:"#17132a",padding:"9px 11px",color:"white"} as const;
+export default function GamesAdminClient({categories,canPublish}:{categories:Category[];canPublish:boolean}){
+ const [games,setGames]=useState<Game[]>([]),[form,setForm]=useState({...blank}),[editing,setEditing]=useState(""),[error,setError]=useState(""),[notice,setNotice]=useState(""),[busy,setBusy]=useState(false);
+ async function load(){const r=await fetch("/api/admin/games",{cache:"no-store"});const d=await r.json();if(!r.ok)throw new Error(d.error||"تعذر تحميل الألعاب");setGames(d.games);}
+ useEffect(()=>{load().catch(e=>setError(e.message));},[]);
+ function set<K extends keyof typeof blank>(k:K,v:(typeof blank)[K]){setForm(p=>({...p,[k]:v}));}
+ function edit(g:Game){setEditing(g.id);setForm({...blank,slug:g.slug,title_ar:g.title_ar,title_en:g.title_en,source_name:g.source_name,launch_url:g.launch_url,status:g.status,license_status:g.license_status,authorization_reference:g.authorization_reference||"",category_ids:g.category_ids?g.category_ids.split(","):[]});setError("");setNotice("");window.scrollTo({top:0,behavior:"smooth"});}
+ function reset(){setEditing("");setForm({...blank});}
+ async function save(e:FormEvent){e.preventDefault();setBusy(true);setError("");setNotice("");try{const payload={...form,id:editing||undefined};const r=await fetch("/api/admin/games",{method:editing?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});const d=await r.json();if(!r.ok)throw new Error(d.error||"تعذر الحفظ");setNotice(editing?"تم تحديث اللعبة.":"تمت إضافة اللعبة كمسودة.");reset();await load();}catch(e){setError(e instanceof Error?e.message:"حدث خطأ");}finally{setBusy(false);}}
+ async function archive(g:Game){if(!confirm("أرشفة اللعبة؟ لن تظهر للزوار."))return;try{const r=await fetch("/api/admin/games",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:g.id,status:"archived"})});const d=await r.json();if(!r.ok)throw new Error(d.error||"تعذر الأرشفة");setNotice("تمت أرشفة اللعبة.");await load();}catch(e){setError(e instanceof Error?e.message:"حدث خطأ");}}
+ function toggleCategory(id:string){set("category_ids",form.category_ids.includes(id)?form.category_ids.filter(x=>x!==id):[...form.category_ids,id]);}
+ return <div style={{display:"grid",gap:20}}>
+ <section className="admin-card"><h2 style={{fontSize:20,fontWeight:850,marginBottom:16}}>{editing?"تعديل بيانات اللعبة":"إضافة لعبة جديدة"}</h2>
+ <form onSubmit={save} style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:12}}>
+ <input required placeholder="معرّف فريد بالإنجليزية مثل space-runner" value={form.slug} onChange={e=>set("slug",e.target.value)} style={input}/>
+ <input required placeholder="اسم اللعبة بالعربية" value={form.title_ar} onChange={e=>set("title_ar",e.target.value)} style={input}/>
+ <input required placeholder="اسم اللعبة بالإنجليزية" value={form.title_en} onChange={e=>set("title_en",e.target.value)} style={input}/>
+ <input required placeholder="اسم الناشر / المصدر" value={form.source_name} onChange={e=>set("source_name",e.target.value)} style={input}/>
+ <input required type="url" placeholder="رابط صفحة المصدر HTTPS" value={form.source_page_url} onChange={e=>set("source_page_url",e.target.value)} style={input}/>
+ <input required type="url" placeholder="رابط تشغيل اللعبة HTTPS" value={form.launch_url} onChange={e=>set("launch_url",e.target.value)} style={input}/>
+ <input required type="url" placeholder="النطاق المسموح مثل https://games.example" value={form.allowed_origin} onChange={e=>set("allowed_origin",e.target.value)} style={input}/>
+ <input type="url" placeholder="رابط صورة الغلاف HTTPS (اختياري)" value={form.thumbnail_url} onChange={e=>set("thumbnail_url",e.target.value)} style={input}/>
+ <select value={form.launch_mode} onChange={e=>set("launch_mode",e.target.value as typeof blank.launch_mode)} style={input}><option value="authorized-embed">تضمين مصرح به</option><option value="hosted-html5">HTML5 مستضاف</option><option value="publisher-sdk">Publisher SDK</option></select>
+ <select value={form.license_status} onChange={e=>set("license_status",e.target.value as typeof blank.license_status)} style={input}><option value="pending">الترخيص قيد التحقق</option><option value="approved">تمت الموافقة</option><option value="rejected">مرفوض</option><option value="expired">منتهي</option></select>
+ <input placeholder="صاحب الحقوق" value={form.rights_holder} onChange={e=>set("rights_holder",e.target.value)} style={input}/>
+ <input placeholder="رقم / مرجع التفويض" value={form.authorization_reference} onChange={e=>set("authorization_reference",e.target.value)} style={input}/>
+ <input type="url" placeholder="رابط إثبات الإذن HTTPS" value={form.rights_evidence_url} onChange={e=>set("rights_evidence_url",e.target.value)} style={input}/>
+ <input type="date" aria-label="تاريخ انتهاء الحقوق" value={form.rights_expires_at} onChange={e=>set("rights_expires_at",e.target.value)} style={input}/>
+ <select value={form.status} onChange={e=>set("status",e.target.value as typeof blank.status)} style={input}><option value="draft">مسودة</option>{canPublish&&<option value="published">منشورة</option>}<option value="archived">مؤرشفة</option></select>
+ <select value={form.orientation} onChange={e=>set("orientation",e.target.value as typeof blank.orientation)} style={input}><option value="any">أي اتجاه</option><option value="portrait">عمودي</option><option value="landscape">أفقي</option></select>
+ <textarea placeholder="الوصف بالعربية" value={form.description_ar} onChange={e=>set("description_ar",e.target.value)} style={{...input,minHeight:85}}/>
+ <textarea placeholder="الوصف بالإنجليزية" value={form.description_en} onChange={e=>set("description_en",e.target.value)} style={{...input,minHeight:85}}/>
+ <textarea placeholder="التعليمات بالعربية" value={form.instructions_ar} onChange={e=>set("instructions_ar",e.target.value)} style={{...input,minHeight:85}}/>
+ <textarea placeholder="التعليمات بالإنجليزية" value={form.instructions_en} onChange={e=>set("instructions_en",e.target.value)} style={{...input,minHeight:85}}/>
+ <textarea placeholder="عناصر التحكم بالعربية" value={form.controls_ar} onChange={e=>set("controls_ar",e.target.value)} style={{...input,minHeight:85}}/>
+ <textarea placeholder="ملاحظات الترخيص والتفويض" value={form.authorization_notes} onChange={e=>set("authorization_notes",e.target.value)} style={{...input,minHeight:85}}/>
+ <div style={{gridColumn:"1/-1",display:"flex",flexWrap:"wrap",gap:12}}>{categories.map(c=><label key={c.id} style={{display:"flex",gap:6,alignItems:"center",fontSize:13}}><input type="checkbox" checked={form.category_ids.includes(c.id)} onChange={()=>toggleCategory(c.id)}/>{c.name_ar}</label>)}</div>
+ <div style={{gridColumn:"1/-1",display:"flex",flexWrap:"wrap",gap:16}}>{([["featured","مميزة"],["mobile_support","دعم الهاتف"],["permissions_fullscreen","السماح بملء الشاشة"],["permissions_pointer_lock","قفل المؤشر"],["permissions_orientation_lock","قفل الاتجاه"]] as const).map(([k,label])=><label key={k} style={{display:"flex",gap:6,alignItems:"center"}}><input type="checkbox" checked={form[k]} onChange={e=>set(k,e.target.checked)}/>{label}</label>)}</div>
+ <div style={{gridColumn:"1/-1",display:"flex",gap:10}}><button disabled={busy} className="admin-secondary" type="submit">{busy?"جارٍ الحفظ...":editing?"حفظ التعديلات":"إضافة كمسودة"}</button>{editing&&<button type="button" className="admin-secondary" onClick={reset}>إلغاء التعديل</button>}</div>
+ </form><p style={{fontSize:12,color:"#aaa5c3",marginTop:12}}>سياسة PlayNova: لا تنشر لعبة إلا بعد التحقق من إذن صاحب الحقوق. الموافقة من داخل النموذج لا تُنشئ ترخيصًا قانونيًا بذاتها.</p></section>
+ <section className="admin-card"><h2 style={{fontSize:20,fontWeight:850,marginBottom:16}}>كتالوج الألعاب ({games.length})</h2><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>اللعبة</th><th>الحالة</th><th>الترخيص</th><th>آخر تحديث</th><th>إجراءات</th></tr></thead><tbody>{games.map(g=><tr key={g.id}><td>{g.title_ar}<small style={{display:"block",color:"#aaa5c3"}}>{g.slug}</small></td><td>{g.status}</td><td>{g.license_status}</td><td>{g.updated_at}</td><td><div style={{display:"flex",gap:7}}><button className="admin-secondary" type="button" onClick={()=>edit(g)}>تعديل</button>{g.status!=="archived"&&<button className="admin-secondary" type="button" onClick={()=>archive(g)}>أرشفة</button>}</div></td></tr>)}</tbody></table></div></section>
+ {error&&<p role="alert" style={{color:"#fca5a5"}}>{error}</p>}{notice&&<p role="status" style={{color:"#86efac"}}>{notice}</p>}
+ </div>;
+}
