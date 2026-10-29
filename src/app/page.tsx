@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Gamepad2, Globe2, Search, Sparkles, Menu, X, Heart, Clock3,
-  Compass, ShieldCheck, ArrowLeft, ChevronLeft, Car, Trophy,
-  Swords, Mountain, Puzzle, Users, Box, Star, Flame, CalendarDays
+  ShieldCheck, ArrowLeft, Car, Trophy, Swords, Mountain, Puzzle,
+  Users, Box, Star, Flame
 } from "lucide-react";
 
 type Locale = "ar" | "en";
@@ -32,9 +32,15 @@ const categories: Category[] = [
   { id: "action", ar: "أكشن", en: "Action", icon: Swords },
   { id: "adventure", ar: "مغامرات", en: "Adventure", icon: Mountain },
   { id: "puzzle", ar: "ألغاز", en: "Puzzle", icon: Puzzle },
-  { id: "casual", ar: "خفيفة", en: "Casual", icon: Sparkles },
+  { id: "shooting", ar: "تصويب", en: "Shooting", icon: Swords },
   { id: "multiplayer", ar: "متعددة اللاعبين", en: "Multiplayer", icon: Users },
-  { id: "3d", ar: "ألعاب ثلاثية الأبعاد", en: "3D Games", icon: Box },
+  { id: "two-player", ar: "لاعبان", en: "Two Player", icon: Users },
+  { id: "simulation", ar: "محاكاة", en: "Simulation", icon: Box },
+  { id: "horror", ar: "رعب", en: "Horror", icon: Flame },
+  { id: "casual", ar: "خفيفة", en: "Casual", icon: Sparkles },
+  { id: "idle", ar: "خمولية", en: "Idle", icon: Clock3 },
+  { id: "platformer", ar: "منصات", en: "Platformer", icon: Mountain },
+  { id: "3d-games", ar: "ألعاب ثلاثية الأبعاد", en: "3D Games", icon: Box },
 ];
 
 const copy = {
@@ -194,13 +200,18 @@ export default function HomePage() {
       <section id="categories" className="container category-section">
         <div className="section-heading"><div><p className="section-kicker">{t.browse}</p><h2 className="section-title">{t.categories}</h2></div></div>
         <div className="category-list">
-          <button type="button" className={category === "all" ? "category-chip active" : "category-chip"} onClick={() => setCategory("all")}>{t.all}</button>
-          {categories.map((item) => { const Icon = item.icon; return <button type="button" key={item.id} className={category === item.id ? "category-chip active" : "category-chip"} aria-pressed={category === item.id} onClick={() => setCategory(item.id)}><Icon size={16} />{item[locale]}</button>; })}
+          <Link href="/categories" className="category-chip">{t.all}</Link>
+          {categories.map((item) => { const Icon = item.icon; return <Link key={item.id} href={"/categories/" + item.id + "?lang=" + locale} className="category-chip"><Icon size={16} />{item[locale]}</Link>; })}
         </div>
       </section>
 
       <section id="discover" className="container search-section">
-        <label className="search-field"><Search size={19} /><span className="sr-only">{t.search}</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search} type="search" /><kbd>⌕</kbd></label>
+        <form action="/search" method="get" className="search-field">
+          <Search size={19} />
+          <input name="q" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search} type="search" aria-label={t.search} maxLength={100} />
+          <input type="hidden" name="lang" value={locale} />
+          <button type="submit" aria-label={isArabic ? "بحث" : "Search"}><kbd>⌕</kbd></button>
+        </form>
         {!ready && <p className="loading-note">{t.loading}</p>}
         {ready && query && filtered.length === 0 && <p className="search-feedback">{t.emptySearch}</p>}
       </section>
