@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft, Gamepad2, Globe2, Search, Sparkles, Zap, Menu, X,
-  Heart, Clock3, Compass, Joystick, ShieldCheck, ChevronLeft
+  Heart, Clock3, Compass, ShieldCheck
 } from "lucide-react";
 
 type Locale = "ar" | "en";
