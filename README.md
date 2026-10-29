@@ -11,10 +11,13 @@ PlayNova is an Arabic-first browser gaming platform in development, designed for
 
 ## Current status
 
-- Responsive Arabic-first landing page
-- Project foundation and Cloudflare deployment configuration
-- Game cards are placeholders; playable games are not connected yet
-- Supabase, accounts, and admin dashboard are not configured yet
+- Responsive dark navy / violet visual system and redesigned landing page
+- Arabic RTL and English LTR homepage switcher
+- Working client-side search and category filters for the current preview catalog
+- Accessible focus styles, reduced-motion support, and responsive mobile navigation
+- Project foundation and Cloudflare Workers deployment configuration
+- Game cards remain clearly marked preview placeholders; no playable games are connected yet
+- Favorites, recently played history, game detail pages, legal pages, Supabase, accounts, and admin dashboard are not implemented yet
 
 ## Requirements
 
@@ -58,9 +61,10 @@ Only publish games, artwork, sounds, and embeds that are original, properly lice
 
 ## Planned roadmap
 
-1. Finish responsive Arabic and English layouts.
-2. Build a searchable game catalog and category pages.
-3. Add only verified, authorized playable games.
-4. Add Supabase database with Row Level Security.
-5. Add secure admin authentication and game management.
-6. Add SEO, analytics, performance, accessibility, and monetization after real content is available.
+1. Build game detail routes and a verified, authorized playable game catalog.
+2. Implement favorites and recently played with persistent storage.
+3. Add dedicated search and category pages.
+4. Add legal pages and contact / copyright reporting workflows.
+5. Add Supabase with Row Level Security only when persistence is required.
+6. Add secure admin authentication and game management.
+7. Complete SEO, analytics, performance, accessibility, and monetization after real content is available.
