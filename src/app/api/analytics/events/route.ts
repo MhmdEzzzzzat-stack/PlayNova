@@ -15,6 +15,7 @@ export async function POST(request:NextRequest){
  const duration=Number(body.durationMs),metricValue=Number(body.metricValue);
  if(body.durationMs!==undefined&&(!Number.isFinite(duration)||duration<0||duration>3600000))return response(400,"Invalid duration.");
  if(body.metricValue!==undefined&&(!Number.isFinite(metricValue)||metricValue<0||metricValue>60000))return response(400,"Invalid metric value.");
+ const resultsCount=Number(body.searchResults);if(body.searchResults!==undefined&&(!Number.isInteger(resultsCount)||resultsCount<0||resultsCount>10000))return response(400,"Invalid search result count.");
  const metricName=["LCP","CLS","INP","FCP","TTFB"].includes(str(body.metricName,8))?str(body.metricName,8):"";
  const failure=["timeout","network","blocked","provider","unknown"].includes(str(body.failureCode,20))?str(body.failureCode,20):"";
  const source=str(body.sourceHost,120).toLowerCase().replace(/[^a-z0-9.-]/g,"");
@@ -24,8 +25,8 @@ export async function POST(request:NextRequest){
  if(type==="search"&&!term)return response(400,"Search term required.");
  const sessionHash=createHash("sha256").update(sessionId).digest("hex");
  try{
- await db.prepare("INSERT OR IGNORE INTO analytics_events(event_id,event_type,game_id,category_id,search_term,source_host,device_type,session_hash,duration_ms,metric_name,metric_value,failure_code) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)")
- .bind(eventId,type,gameId,categoryId||null,term,source,device,sessionHash,body.durationMs===undefined?null:Math.round(duration),metricName,body.metricValue===undefined?null:metricValue,failure).run();
+ await db.prepare("INSERT OR IGNORE INTO analytics_events(event_id,event_type,game_id,category_id,search_term,search_results_count,source_host,device_type,session_hash,duration_ms,metric_name,metric_value,failure_code) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
+ .bind(eventId,type,gameId,categoryId||null,term,body.searchResults===undefined?-1:resultsCount,source,device,sessionHash,body.durationMs===undefined?null:Math.round(duration),metricName,body.metricValue===undefined?null:metricValue,failure).run();
  return response(202);
  }catch{return response(503,"Analytics is temporarily unavailable.");}
 }
