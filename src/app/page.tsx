@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Gamepad2, Globe2, Search, Sparkles, Menu, X, Heart, Clock3,
   ShieldCheck, ArrowLeft, Car, Trophy, Swords, Mountain, Puzzle,
@@ -98,7 +99,7 @@ function GameSection({
             <article key={game.id} className="game-card">
               <Link href={`/games/${game.slug}`} className="game-card-link" aria-label={game.title}>
                 <div className="game-thumb">
-                  {game.thumbnail ? <img src={game.thumbnail} alt="" loading="lazy" /> : <Gamepad2 size={42} />}
+                  {game.thumbnail ? <Image src={game.thumbnail} alt="" fill sizes="(max-width: 640px) 50vw, 25vw" loading="lazy" unoptimized /> : <Gamepad2 size={42} />}
                   <span className="game-category">{game.category}</span>
                 </div>
                 <div className="game-card-copy"><h3>{game.title}</h3><span>{game.category}</span></div>
@@ -117,7 +118,7 @@ function GameSection({
 export default function HomePage() {
   const [locale, setLocale] = useState<Locale>("ar");
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("all");
+  
   const [menuOpen, setMenuOpen] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [recent, setRecent] = useState<string[]>([]);
@@ -153,7 +154,7 @@ export default function HomePage() {
   };
 
   const filtered = useMemo(() => publishedGames.filter((game) => {
-    const matchesCategory = category === "all" || game.category.toLowerCase() === category;
+    const matchesCategory = true;
     const term = query.trim().toLocaleLowerCase();
     return matchesCategory && (!term || `${game.title} ${game.category}`.toLocaleLowerCase().includes(term));
   }), [category, query]);
