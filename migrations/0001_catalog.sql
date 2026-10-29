@@ -68,6 +68,7 @@ CREATE INDEX IF NOT EXISTS idx_game_categories_category ON game_categories(categ
 
 INSERT OR IGNORE INTO categories (id, slug, name_ar, name_en) VALUES
 ('action','action','أكشن','Action'),
+('strategy','strategy','استراتيجية','Strategy'),
 ('adventure','adventure','مغامرات','Adventure'),
 ('racing','racing','سباق','Racing'),
 ('sports','sports','رياضة','Sports'),
