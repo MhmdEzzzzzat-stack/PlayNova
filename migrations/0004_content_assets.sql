@@ -21,3 +21,12 @@ CREATE TABLE IF NOT EXISTS content_assets (
 CREATE INDEX IF NOT EXISTS idx_content_assets_game ON content_assets(game_id, asset_type, status);
 CREATE INDEX IF NOT EXISTS idx_content_assets_review ON content_assets(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_content_assets_hash ON content_assets(sha256, size_bytes);
+
+-- Explicit provider host allowlist; empty by default so no arbitrary remote embeds are trusted.
+CREATE TABLE IF NOT EXISTS provider_domains (
+  domain TEXT PRIMARY KEY COLLATE NOCASE,
+  active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0,1)),
+  notes TEXT NOT NULL DEFAULT '',
+  added_by TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
