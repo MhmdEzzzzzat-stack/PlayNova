@@ -1,15 +1,14 @@
 import {NextRequest,NextResponse} from "next/server";
 import {createHash} from "node:crypto";
 import {getPlayNovaDb} from "@/lib/db";
-const TYPES=["game_view","search","game_start","load_success","load_failure","favorite_add","favorite_remove","category_visit","session_end","web_vital","client_error","server_error"] as const;
-type EventType=typeof TYPES[number];
+import {isAnalyticsEventType,isAnalyticsId} from "@/lib/analytics-validation";
 type Body={eventId?:unknown;type?:unknown;slug?:unknown;categoryId?:unknown;term?:unknown;sourceHost?:unknown;device?:unknown;durationMs?:unknown;metricName?:unknown;metricValue?:unknown;failureCode?:unknown;sessionId?:unknown;searchResults?:unknown};
 const str=(v:unknown,max:number)=>typeof v==="string"?v.trim().slice(0,max):"";
 const response=(status:number,error?:string)=>NextResponse.json(error?{error}:{ok:true},{status,headers:{"Cache-Control":"no-store"}});
 export async function POST(request:NextRequest){
  let body:Body;try{body=await request.json() as Body;}catch{return response(400,"Invalid event payload.");}
- const type=str(body.type,32) as EventType,eventId=str(body.eventId,80),sessionId=str(body.sessionId,80);
- if(!TYPES.includes(type)||!/^[a-zA-Z0-9_-]{12,80}$/.test(eventId)||!/^[a-zA-Z0-9_-]{20,80}$/.test(sessionId))return response(400,"Invalid event.");
+ const type=str(body.type,32),eventId=str(body.eventId,80),sessionId=str(body.sessionId,80);
+ if(!isAnalyticsEventType(type)||!isAnalyticsId(eventId)||!isAnalyticsId(sessionId,20,80))return response(400,"Invalid event.");
  const consent=request.headers.get("x-playnova-analytics-consent");if(consent!=="granted")return response(403,"Analytics consent is required.");
  const origin=request.headers.get("origin");try{if(!origin||new URL(origin).origin!==new URL(request.url).origin)return response(403,"Cross-origin event submission is not allowed.");}catch{return response(403,"Invalid request origin.");}
  const slug=str(body.slug,120),categoryId=str(body.categoryId,80),term=str(body.term,80).replace(/[<>\u0000-\u001f]/g,""),device=["mobile","desktop","tablet"].includes(str(body.device,12))?str(body.device,12):"unknown";
