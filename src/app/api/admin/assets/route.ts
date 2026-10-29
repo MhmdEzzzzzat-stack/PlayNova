@@ -8,7 +8,7 @@ async function bucket(){const {env}=await getCloudflareContext({async:true});con
 const no=(message="غير مصرح لك.")=>NextResponse.json({error:message},{status:403});
 const bad=(message:string)=>NextResponse.json({error:message},{status:400});
 const sameOrigin=(r:NextRequest)=>{try{const o=r.headers.get("origin");return !!o&&new URL(o).origin===new URL(r.url).origin;}catch{return false;}};
-async function digest(bytes:Uint8Array){const hash=await crypto.subtle.digest("SHA-256",bytes);return [...new Uint8Array(hash)].map(x=>x.toString(16).padStart(2,"0")).join("");}
+async function digest(bytes:Uint8Array){const buffer=new ArrayBuffer(bytes.byteLength);new Uint8Array(buffer).set(bytes);const hash=await crypto.subtle.digest("SHA-256",buffer);return [...new Uint8Array(hash)].map(x=>x.toString(16).padStart(2,"0")).join("");}
 function safeName(name:string){return name.normalize("NFKC").replace(/[^a-zA-Z0-9._-]/g,"_").slice(-100)||"upload";}
 export async function GET(){
  try{await requireAdmin("reviewer");}catch{return no();}
