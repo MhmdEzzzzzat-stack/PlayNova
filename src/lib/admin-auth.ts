@@ -17,8 +17,8 @@ const roleRank: Record<AdminRole, number> = {
 
 let jwks: ReturnType<typeof createRemoteJWKSet> | undefined;
 
-function accessConfig() {
-  const { env } = getCloudflareContext() as unknown as { env: Record<string, string | undefined> };
+async function accessConfig() {
+  const { env } = await getCloudflareContext({ async: true }) as unknown as { env: Record<string, string | undefined> };
   const teamDomain = env.CF_ACCESS_TEAM_DOMAIN?.replace(/^https?:\\/\\//, "").replace(/\\/$/, "");
   const audience = env.CF_ACCESS_AUD;
   if (!teamDomain || !audience) {
@@ -29,7 +29,7 @@ function accessConfig() {
 
 /** Verifies the signed Cloudflare Access assertion. Never trust email headers supplied by the browser. */
 export async function getAdminIdentity(): Promise<AdminIdentity | null> {
-  const { issuer, audience } = accessConfig();
+  const { issuer, audience } = await accessConfig();
   const token = (await headers()).get("cf-access-jwt-assertion");
   if (!token) return null;
 
