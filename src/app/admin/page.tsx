@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getAdminIdentity } from "@/lib/admin-auth";
+import AdminLogoutButton from "./logout-button";
 import { getPlayNovaDb } from "@/lib/db";
 
 type CountRow = { total: number };
@@ -71,7 +72,7 @@ export default async function AdminOverview({ searchParams }: {
       <section className="admin-main">
         <header className="admin-heading">
           <div><p className="admin-eyebrow">PLAYNOVA CONTROL CENTER</p><h1>نظرة عامة</h1><p>بيانات مباشرة من قاعدة D1 وسجل الأحداث الفعلي.</p></div>
-          <Link href="/" className="admin-secondary">عرض الموقع</Link>
+          <div style={{ display: "flex", gap: 10 }}><Link href="/" className="admin-secondary">عرض الموقع</Link><AdminLogoutButton /></div>
         </header>
         <form className="admin-filter" method="get">
           <label>من <input type="date" name="from" defaultValue={start} /></label>
