@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import {trackAnalytics} from "@/lib/analytics-client";
 import type { LaunchMode, GamePermissions } from "@/lib/games";
 
 type LaunchConfig = {
@@ -65,6 +66,7 @@ export default function GamePlayer({ slug, locale, launch, title, unavailableTex
     }
     setFailed(false);
     setLoaded(false);
+    trackAnalytics("game_start",{slug});
     setStarted(true);
   };
 
@@ -81,7 +83,6 @@ export default function GamePlayer({ slug, locale, launch, title, unavailableTex
     try {
       await frame.requestFullscreen();
     } catch {
-      setFailed(true);
     }
   };
 
@@ -117,8 +118,8 @@ export default function GamePlayer({ slug, locale, launch, title, unavailableTex
             allowFullScreen={launch.permissions.fullscreen}
             referrerPolicy="no-referrer"
             loading="lazy"
-            onLoad={() => { setLoaded(true); recordLaunch(); }}
-            onError={() => setFailed(true)}
+            onLoad={() => { setLoaded(true); trackAnalytics("load_success",{slug}); recordLaunch(); }}
+            onError={() => { setFailed(true); trackAnalytics("load_failure",{slug,failureCode:"network"}); }}
           />
         )}
       </div>
