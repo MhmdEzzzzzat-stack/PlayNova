@@ -1,7 +1,10 @@
 "use client";
 import {useEffect,useState,type FormEvent} from "react";
 type Category={id:string;name_ar:string;name_en:string};
-type Game=typeof blank & {id:string;updated_at:string;category_ids:string|null;featured:number;permissions_fullscreen:number;permissions_pointer_lock:number;permissions_orientation_lock:number;mobile_support:number};
+type Game={
+ id:string;updated_at:string;category_ids:string|null;featured:number;permissions_fullscreen:number;permissions_pointer_lock:number;permissions_orientation_lock:number;mobile_support:number;
+ slug:string;title_ar:string;title_en:string;description_ar:string|null;description_en:string|null;instructions_ar:string|null;instructions_en:string|null;controls_ar:string|null;controls_en:string|null;thumbnail_url:string|null;source_name:string;source_page_url:string;launch_url:string;allowed_origin:string;launch_mode:string;license_type:string;license_status:string;authorization_reference:string|null;authorization_notes:string|null;rights_holder:string|null;rights_expires_at:string|null;rights_evidence_url:string|null;status:string;orientation:string;
+};
 const blank={slug:"",title_ar:"",title_en:"",description_ar:"",description_en:"",instructions_ar:"",instructions_en:"",controls_ar:"",controls_en:"",thumbnail_url:"",source_name:"",source_page_url:"",launch_url:"",allowed_origin:"",launch_mode:"authorized-embed",license_type:"pending",license_status:"pending",authorization_reference:"",authorization_notes:"",rights_holder:"",rights_expires_at:"",rights_evidence_url:"",status:"draft",featured:false,category_ids:[] as string[],permissions_fullscreen:false,permissions_pointer_lock:false,permissions_orientation_lock:false,mobile_support:false,orientation:"any"};
 const input={width:"100%",minHeight:42,border:"1px solid rgba(196,181,253,.2)",borderRadius:10,background:"#17132a",padding:"9px 11px",color:"white"} as const;
 export default function GamesAdminClient({categories,canPublish}:{categories:Category[];canPublish:boolean}){
