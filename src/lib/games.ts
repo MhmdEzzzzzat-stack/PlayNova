@@ -52,7 +52,7 @@ SELECT g.*,
   (SELECT group_concat(gc.category_id) FROM game_categories gc WHERE gc.game_id = g.id) AS categories,
   (SELECT group_concat(gt.tag) FROM game_tags gt WHERE gt.game_id = g.id) AS tags
 FROM games g
-WHERE g.status = 'published' AND g.license_status = 'approved'
+WHERE g.status = 'published' AND g.license_status = 'approved' AND g.moderation_status = 'active'
   AND length(trim(g.authorization_reference)) > 0
 `;
 
@@ -86,4 +86,33 @@ export function validateGameLaunch(game: PublishedGame) {
       url.origin === allowedOrigin.origin && Boolean(game.launch.authorizationReference.trim()) &&
       ["hosted-html5", "authorized-embed", "publisher-sdk"].includes(game.launch.mode);
   } catch { return false; }
+}
+
+export async function getPublishedCategorySlugs(): Promise<string[]> {
+  const db = await getPlayNovaDb();
+  const result = await db.prepare(`
+    SELECT DISTINCT c.slug
+    FROM categories c
+    JOIN game_categories gc ON gc.category_id = c.id
+    JOIN games g ON g.id = gc.game_id
+    WHERE c.visible = 1 AND g.status = 'published'
+      AND g.license_status = 'approved' AND g.moderation_status = 'active'
+      AND length(trim(g.authorization_reference)) > 0
+    ORDER BY c.slug
+  `).all<{ slug: string }>();
+  return result.results.map((row) => row.slug);
+}
+
+export async function getPublishedGamesForCategory(slug: string): Promise<PublishedGame[]> {
+  const db = await getPlayNovaDb();
+  const result = await db.prepare(`
+    ${SELECT_PUBLISHED}
+    AND EXISTS (
+      SELECT 1 FROM game_categories gc
+      JOIN categories c ON c.id = gc.category_id
+      WHERE gc.game_id = g.id AND c.slug = ? AND c.visible = 1
+    )
+    ORDER BY g.featured DESC, g.published_at DESC
+  `).bind(slug).all<GameRow>();
+  return result.results.map(mapGame);
 }
