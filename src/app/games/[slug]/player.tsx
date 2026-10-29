@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {trackAnalytics} from "@/lib/analytics-client";
 import type { LaunchMode, GamePermissions } from "@/lib/games";
 
@@ -42,6 +42,7 @@ export default function GamePlayer({ slug, locale, launch, title, unavailableTex
   const [failed, setFailed] = useState(false);
   const safeUrl = getSafeLaunchUrl(launch);
   const ar = locale === "ar";
+  useEffect(()=>()=>{if(loadTimer.current)clearTimeout(loadTimer.current);},[]);
   const labels = ar
     ? { fullscreen: "ملء الشاشة", start: "ابدأ اللعبة", loading: "جارٍ تحميل اللعبة…", failed: "تعذر تحميل اللعبة.", retry: "إعادة المحاولة", note: "يُضاف السجل محليًا عند تحميل إطار اللعبة، وليس عند مجرد فتح الصفحة." }
     : { fullscreen: "Fullscreen", start: "Start game", loading: "Loading game…", failed: "Game could not be loaded.", retry: "Retry", note: "Recent history is saved locally when the game frame loads, not on a page view alone." };
@@ -62,6 +63,7 @@ export default function GamePlayer({ slug, locale, launch, title, unavailableTex
 
   const start = () => {
     if (!safeUrl) {
+      trackAnalytics("load_failure",{slug,failureCode:"blocked"});
       setFailed(true);
       return;
     }
@@ -77,7 +79,7 @@ export default function GamePlayer({ slug, locale, launch, title, unavailableTex
     setFailed(false);
     setLoaded(false);
     setStarted(false);
-    window.setTimeout(() => setStarted(true), 0);
+    window.setTimeout(start, 0);
   };
 
   const fullscreen = async () => {
