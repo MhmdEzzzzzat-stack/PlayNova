@@ -17,7 +17,7 @@ export default async function AdminOverview({ searchParams }: {
 }) {
   const admin = await getAdminIdentity();
   if (!admin) {
-    return <main className="admin-shell"><section className="admin-card"><h1>الوصول مرفوض</h1><p>يجب تسجيل الدخول عبر Cloudflare Access وأن يكون بريدك مسجلًا كمشرف نشط.</p></section></main>;
+    return <main className="admin-shell"><section className="admin-card"><h1>الوصول مرفوض</h1><p>سجّل الدخول إلى لوحة الإدارة للمتابعة. <a href="/admin/login">تسجيل الدخول</a></p></section></main>;
   }
 
   const query = await searchParams;
