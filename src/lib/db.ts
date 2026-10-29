@@ -27,5 +27,5 @@ export async function getPlayNovaDb(): Promise<PlayNovaD1> {
   const { env } = await getCloudflareContext({ async: true });
   const db = (env as unknown as { DB?: PlayNovaD1 }).DB;
   if (!db) throw new Error("PlayNova D1 binding is missing. Configure DB in wrangler.jsonc and Cloudflare Workers.");
-  return {prepare(sql:string){const label=sql.trim().split(/\\s+/).slice(0,2).join(" ");return monitorStatement(db.prepare(sql),label);}};
+  return {prepare(sql:string){const label=sql.trim().split(/\s+/).slice(0,2).join(" ");return monitorStatement(db.prepare(sql),label);}};
 }
