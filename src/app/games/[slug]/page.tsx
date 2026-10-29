@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function GamePage({ params, searchParams }: Props) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
-  const game = getPublishedGame(slug);
+  const game = await getPublishedGame(slug);
   if (!game) notFound();
 
   const locale = getLocale(query.lang);
