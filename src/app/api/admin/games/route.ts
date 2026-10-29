@@ -10,6 +10,9 @@ const safeUrl = (v: unknown) => typeof v === "string" && v.length <= 2048 && /^h
 const sameOrigin = (r:NextRequest) => { try { const o=r.headers.get("origin"); return !!o && new URL(o).origin===new URL(r.url).origin; } catch { return false; } };
 const denied=()=>NextResponse.json({error:"غير مصرح لك."},{status:403});
 const bad=(error:string)=>NextResponse.json({error},{status:400});
+async function providerAllowed(db:Awaited<ReturnType<typeof getPlayNovaDb>>,launch:string,origin:string){
+ try{const u=new URL(launch),o=new URL(origin);if(u.protocol!=="https:"||u.username||u.password||u.origin!==o.origin)return false;const row=await db.prepare("SELECT domain FROM provider_domains WHERE active=1 AND lower(domain)=lower(?)").bind(u.hostname).first();return !!row;}catch{return false;}
+}
 
 type GameInput = {
  id?:unknown; slug?:unknown; title_ar?:unknown; title_en?:unknown;
@@ -58,7 +61,9 @@ export async function POST(request:NextRequest){
  if(actor.role==="editor"&&license!=="pending")return denied();
  const auth=str(b.authorization_reference,500);
  if(status==="published"&&(!rolesCanPublish.includes(actor.role)||license!=="approved"||!auth||!str(b.rights_evidence_url,2048)||!safeUrl(b.rights_evidence_url)))return bad("لا يمكن النشر دون صلاحية مدير/مالك وموافقة الترخيص ورابط إثبات HTTPS ورقم تفويض.");
- const db=await getPlayNovaDb(),id=str(b.id,100)||crypto.randomUUID(),now=new Date().toISOString();
+ const db=await getPlayNovaDb();
+ if(!await providerAllowed(db,str(b.launch_url,2048),str(b.allowed_origin,255)))return bad("نطاق تشغيل اللعبة غير موجود في قائمة مزودي الخدمة المعتمدين.");
+ const id=str(b.id,100)||crypto.randomUUID(),now=new Date().toISOString();
  try{
  await db.prepare(`INSERT INTO games(id,slug,title_ar,title_en,description_ar,description_en,instructions_ar,instructions_en,controls_ar,controls_en,thumbnail_url,source_name,source_page_url,launch_url,allowed_origin,launch_mode,license_type,license_status,authorization_reference,authorization_notes,permissions_fullscreen,permissions_pointer_lock,permissions_orientation_lock,status,featured,rights_holder,rights_expires_at,rights_evidence_url,mobile_support,orientation,updated_by,published_at)
  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(
@@ -75,13 +80,15 @@ export async function PATCH(request:NextRequest){
  let b:GameInput;try{b=await request.json();}catch{return bad("بيانات غير صالحة.");}
  const id=str(b.id,100);if(!id)return bad("معرّف اللعبة مطلوب.");
  const db=await getPlayNovaDb();
- const existing=await db.prepare("SELECT id,status,license_status,authorization_reference,rights_evidence_url FROM games WHERE id=?").bind(id).first<{id:string;status:GameStatus;license_status:LicenseStatus;authorization_reference:string;rights_evidence_url:string}>();
+ const existing=await db.prepare("SELECT id,status,license_status,authorization_reference,rights_evidence_url,launch_url,allowed_origin FROM games WHERE id=?").bind(id).first<{id:string;status:GameStatus;license_status:LicenseStatus;authorization_reference:string;rights_evidence_url:string;launch_url:string;allowed_origin:string}>();
  if(!existing)return NextResponse.json({error:"اللعبة غير موجودة."},{status:404});
  const error=validate(b,true);if(error)return bad(error);
  if(actor.role==="editor"&&b.license_status!==undefined)return denied();
  const status=(b.status??existing.status) as GameStatus, license=(b.license_status??existing.license_status) as LicenseStatus;
  const auth=str(b.authorization_reference,500)||existing.authorization_reference;
  const evidence=b.rights_evidence_url===undefined?existing.rights_evidence_url:str(b.rights_evidence_url,2048);
+ const nextLaunch=b.launch_url===undefined?existing.launch_url:str(b.launch_url,2048),nextOrigin=b.allowed_origin===undefined?existing.allowed_origin:str(b.allowed_origin,255);
+ if((b.launch_url!==undefined||b.allowed_origin!==undefined||status==="published")&&!await providerAllowed(db,nextLaunch,nextOrigin))return bad("نطاق تشغيل اللعبة غير موجود في قائمة مزودي الخدمة المعتمدين.");
  if(status==="published"&&((b.status==="published"&&existing.status!=="published"&&!rolesCanPublish.includes(actor.role))||license!=="approved"||!auth||!safeUrl(evidence)))return bad("النشر يتطلب مديرًا أو مالكًا وموافقة الترخيص وإثبات HTTPS.");
  const fields=["slug","title_ar","title_en","description_ar","description_en","instructions_ar","instructions_en","controls_ar","controls_en","thumbnail_url","source_name","source_page_url","launch_url","allowed_origin","launch_mode","license_type","license_status","authorization_reference","authorization_notes","rights_holder","rights_expires_at","rights_evidence_url","status","featured","mobile_support","orientation","permissions_fullscreen","permissions_pointer_lock","permissions_orientation_lock"];
  const values:unknown[]=[];const sets:string[]=[];
