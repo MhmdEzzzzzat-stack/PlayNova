@@ -1,0 +1,31 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+
+# tests
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# production
+/build
+
+# local env files
+.env*
+!.env.example
+
+# deployment
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
