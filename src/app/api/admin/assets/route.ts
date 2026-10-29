@@ -42,7 +42,7 @@ export async function POST(request:NextRequest){
  .bind(id,gameId||null,kind,key,safeName(file.name),inspected.contentType,inspected.extension,bytes.byteLength,sha,actor.email,now,now).run();
  await db.prepare("INSERT INTO admin_audit_log_v2(actor_email,actor_role,action,entity_type,entity_id,details_json) VALUES(?,?, 'asset_uploaded','asset',?,?)").bind(actor.email,actor.role,id,JSON.stringify({kind,size:bytes.byteLength,sha256:sha,zipEntries:inspected.entries,expandedBytes:inspected.expandedBytes})).run();
  return NextResponse.json({ok:true,id,status:"pending_review",size:bytes.byteLength,sha256:sha},{status:201});
- }catch(e){try{await store.delete(key);}catch{}return NextResponse.json({error:"تعذر حفظ سجل الملف؛ تمت محاولة تنظيف الملف المرفوع.",detail:e instanceof Error?e.message:""},{status:500});}
+ }catch(e){try{await db.prepare("DELETE FROM content_assets WHERE id=?").bind(id).run();}catch{}try{await store.delete(key);}catch{}return NextResponse.json({error:"تعذر حفظ سجل الملف؛ تمت محاولة تنظيف الملف المرفوع.",detail:e instanceof Error?e.message:""},{status:500});}
 }
 export async function PATCH(request:NextRequest){
  if(!sameOrigin(request))return no();
