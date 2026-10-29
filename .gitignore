@@ -1,31 +1,35 @@
-# dependencies
+# Dependencies
 /node_modules
 /.pnp
 .pnp.*
 .yarn/*
 
-# tests
-/coverage
-
 # Next.js
 /.next/
 /out/
-
-# production
 /build
 
-# local env files
+# Cloudflare / OpenNext
+/.open-next/
+/.wrangler/
+.worker-configuration/
+cloudflare-env.d.ts
+
+# Local environment files
 .env*
 !.env.example
 
-# deployment
+# Deployment
 .vercel
 
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
 
-# OS/editor
+# Tests
+/coverage
+
+# OS / editor
 .DS_Store
 Thumbs.db
 .vscode/
