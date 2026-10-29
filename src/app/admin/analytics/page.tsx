@@ -1,5 +1,5 @@
 import Link from "next/link";
-import {requireAdmin} from "@/lib/admin-auth";
+import {getAdminIdentity} from "@/lib/admin-auth";
 import {getPlayNovaDb} from "@/lib/db";
 import AnalyticsRetentionButton from "./retention-button";
 export const dynamic="force-dynamic";
@@ -11,7 +11,7 @@ type CategoryRow={category_id:string;name_ar:string;name_en:string;visits:number
 type DeviceRow={device_type:string;views:number;starts:number;loads:number;failures:number;avg_lcp:number|null;avg_inp:number|null;avg_cls:number|null};
 type ErrorRow={source_name:string;failure_code:string;count:number};
 export default async function AnalyticsPage({searchParams}:{searchParams:Promise<{from?:string;to?:string}>}){
- try{await requireAdmin("reviewer");}catch{return <main className="admin-shell"><section className="admin-card"><h1>الوصول مرفوض</h1><Link href="/admin/login">تسجيل الدخول</Link></section></main>;}
+ const admin=await getAdminIdentity();if(!admin)return <main className="admin-shell"><section className="admin-card"><h1>الوصول مرفوض</h1><Link href="/admin/login">تسجيل الدخول</Link></section></main>;
  const q=await searchParams,today=new Date().toISOString().slice(0,10),from=validDate(q.from)||new Date(Date.now()-6*86400000).toISOString().slice(0,10),to=validDate(q.to)||today,start=from<=to?from:to,end=from<=to?to:from,endExclusive=new Date(Date.parse(end+"T00:00:00Z")+86400000).toISOString().slice(0,10);
  const db=await getPlayNovaDb(),range=[start,endExclusive];
  const [metrics,games,searches,cats,devices,errors,vitals]=await Promise.all([
@@ -45,7 +45,7 @@ export default async function AnalyticsPage({searchParams}:{searchParams:Promise
  <section className="admin-card"><h2>الأداء حسب نوع الجهاز</h2><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>الجهاز</th><th>مشاهدات</th><th>بدء</th><th>تحميل</th><th>فشل</th><th>LCP ms</th><th>INP ms</th><th>CLS</th></tr></thead><tbody>{devices.results.map(x=><tr key={x.device_type}><td>{x.device_type}</td><td>{n(x.views)}</td><td>{n(x.starts)}</td><td>{n(x.loads)}</td><td>{n(x.failures)}</td><td>{x.avg_lcp===null?"—":Math.round(x.avg_lcp)}</td><td>{x.avg_inp===null?"—":Math.round(x.avg_inp)}</td><td>{x.avg_cls===null?"—":x.avg_cls.toFixed(3)}</td></tr>)}</tbody></table></div></section>
  <section className="admin-card"><h2>أخطاء التشغيل حسب المزود</h2>{errors.results.length?<div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>المزود</th><th>نوع الخطأ</th><th>العدد</th></tr></thead><tbody>{errors.results.map((x,i)=><tr key={x.source_name+x.failure_code+i}><td>{x.source_name}</td><td>{x.failure_code||"unknown"}</td><td>{n(x.count)}</td></tr>)}</tbody></table></div>:<p className="admin-empty">لا توجد إخفاقات مسجلة.</p>}</section>
  <section className="admin-card"><h2>مؤشرات Core Web Vitals</h2>{vitals.results.length?<div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>المؤشر</th><th>عدد العينات</th><th>المتوسط</th></tr></thead><tbody>{vitals.results.map(x=><tr key={x.metric_name}><td>{x.metric_name}</td><td>{n(x.samples)}</td><td>{x.average.toFixed(2)}</td></tr>)}</tbody></table></div>:<p className="admin-empty">لا توجد عينات Web Vitals حتى الآن؛ لم يتم جمع بيانات غير متاحة.</p>}</section>
- <section className="admin-card"><h2>الاحتفاظ بالبيانات والتكلفة</h2><p>تُحتفظ أحداث التحليلات لمدة 90 يومًا كسياسة مقترحة. حجم التخزين وحركة البيانات يعتمدان على استخدام Cloudflare D1 وWorkers، ولا نفترض حدودًا مجانية غير محدودة.</p><AnalyticsRetentionButton /></section>
+ <section className="admin-card"><h2>الاحتفاظ بالبيانات والتكلفة</h2><p>تُحتفظ أحداث التحليلات لمدة 90 يومًا كسياسة مقترحة. حجم التخزين وحركة البيانات يعتمدان على استخدام Cloudflare D1 وWorkers، ولا نفترض حدودًا مجانية غير محدودة.</p>{(admin.role==="owner"||admin.role==="administrator")&&<AnalyticsRetentionButton />}</section>
  <p className="admin-footnote">الفترة: {start} إلى {end}. الجلسات تُحسب بمعرّف عشوائي مجهول بموافقة المستخدم. تحميل iframe لا يثبت أن اللعبة أصبحت قابلة للعب؛ هو مجرد إشارة تحميل من المتصفح. لا يتم جمع عناوين IP أو بيانات شخصية مباشرة. بيانات الزيارات العائدة غير متاحة بعد ولا تُستنتج من التخمين.</p>
  </section></main>;
 }
