@@ -63,6 +63,7 @@ export default async function AdminOverview({ searchParams }: {
           <Link href="/admin/games">إدارة الألعاب</Link>
           <Link href="/admin/categories">التصنيفات</Link>
           <Link href="/admin/assets">الملفات والأصول</Link>
+          {(admin.role === "owner" || admin.role === "administrator") && <Link href="/admin/providers">مزودو الألعاب</Link>}
           <Link href="/admin/licenses">التراخيص والحقوق</Link>
           <Link href="/admin/homepage">الصفحة الرئيسية</Link>
           <Link href="/admin/reports">البلاغات والإشراف</Link>
