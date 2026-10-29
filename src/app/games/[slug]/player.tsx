@@ -36,6 +36,7 @@ function getSafeLaunchUrl(config: LaunchConfig) {
 
 export default function GamePlayer({ slug, locale, launch, title, unavailableText, emptyText }: Props) {
   const frameRef = useRef<HTMLIFrameElement>(null);
+  const loadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [started, setStarted] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -67,6 +68,8 @@ export default function GamePlayer({ slug, locale, launch, title, unavailableTex
     setFailed(false);
     setLoaded(false);
     trackAnalytics("game_start",{slug});
+    if(loadTimer.current)clearTimeout(loadTimer.current);
+    loadTimer.current=setTimeout(()=>{setFailed(true);setStarted(false);trackAnalytics("load_failure",{slug,failureCode:"timeout"});},20000);
     setStarted(true);
   };
 
@@ -118,8 +121,8 @@ export default function GamePlayer({ slug, locale, launch, title, unavailableTex
             allowFullScreen={launch.permissions.fullscreen}
             referrerPolicy="no-referrer"
             loading="lazy"
-            onLoad={() => { setLoaded(true); trackAnalytics("load_success",{slug}); recordLaunch(); }}
-            onError={() => { setFailed(true); trackAnalytics("load_failure",{slug,failureCode:"network"}); }}
+            onLoad={() => { if(loadTimer.current)clearTimeout(loadTimer.current);setLoaded(true);trackAnalytics("load_success",{slug});recordLaunch(); }}
+            onError={() => { if(loadTimer.current)clearTimeout(loadTimer.current);setFailed(true);trackAnalytics("load_failure",{slug,failureCode:"network"}); }}
           />
         )}
       </div>
