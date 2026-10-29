@@ -19,6 +19,7 @@ export async function GET(){
 }
 export async function POST(request:NextRequest){
  if(!sameOrigin(request))return no();
+ const contentLength=Number(request.headers.get("content-length")||0);if(contentLength>51*1024*1024)return bad("حجم الطلب يتجاوز الحد الأقصى.");
  let actor;try{actor=await requireAdmin("editor");}catch{return no();}
  let form:FormData;try{form=await request.formData();}catch{return bad("تعذر قراءة نموذج الرفع.");}
  const file=form.get("file"),gameId=String(form.get("gameId")||"").trim(),kind=String(form.get("kind")||"");
