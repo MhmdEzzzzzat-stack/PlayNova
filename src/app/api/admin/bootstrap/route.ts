@@ -3,7 +3,6 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { createAdminSession, hashAdminPassword, COOKIE_NAME } from "@/lib/admin-auth";
 import { getPlayNovaDb } from "@/lib/db";
 
-export const runtime = "edge";
 
 function constantTimeEqual(left: string, right: string): boolean {
   const a = new TextEncoder().encode(left);
