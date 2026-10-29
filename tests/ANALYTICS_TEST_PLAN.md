@@ -23,7 +23,7 @@
 - Game iframes load only after a deliberate Start action and are lazy-loaded.
 - Web Vitals LCP, CLS, INP, FCP and TTFB are observed when the browser supports them and consent is granted.
 - Cloudflare Worker Observability is enabled. Next request errors are logged with sanitized route/method/error name only; inspect Cloudflare logs for server-side diagnostics.
-- D1 indexes support date, event type, game and session aggregations.
+- D1 indexes support date, event type, game and session aggregations. Queries taking 250 ms or more emit a sanitized slow-query diagnostic (operation label and duration, no bound values) to Cloudflare Worker Observability logs.
 
 ## Required staging verification
 1. With no consent, browse, search, visit a category, favorite a game and start a game: verify no rows are added to analytics_events.
