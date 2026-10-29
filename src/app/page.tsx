@@ -157,7 +157,7 @@ export default function HomePage() {
     const matchesCategory = true;
     const term = query.trim().toLocaleLowerCase();
     return matchesCategory && (!term || `${game.title} ${game.category}`.toLocaleLowerCase().includes(term));
-  }), [category, query]);
+  }), [query]);
 
   const featured = filtered.filter((game) => game.featured);
   const popular = [...filtered].filter((game) => typeof game.popularity === "number").sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
