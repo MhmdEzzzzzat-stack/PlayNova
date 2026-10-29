@@ -1,7 +1,18 @@
 import Link from "next/link";
 import { getLocale } from "@/lib/categories";
+import type { Metadata } from "next";
+import { localizedAlternates } from "@/lib/seo";
 
-export const metadata = { title: "Privacy | PlayNova", description: "How PlayNova stores local preferences and handles data." };
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ lang?: string }> }): Promise<Metadata> {
+  const params = await searchParams;
+  const locale = getLocale(params.lang);
+  return {
+    title: locale === "ar" ? "الخصوصية | PlayNova" : "Privacy | PlayNova",
+    description: locale === "ar" ? "تعرف على كيفية تعامل PlayNova مع بياناتك وخصوصيتك." : "How PlayNova handles your data and privacy.",
+    alternates: localizedAlternates("/privacy", locale),
+    robots: { index: true, follow: true },
+  };
+}
 
 export default async function PrivacyPage({ searchParams }: { searchParams: Promise<{ lang?: string }> }) {
   const params = await searchParams;
