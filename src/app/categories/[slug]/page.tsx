@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const category = getCategory(slug);
   if (!category) return { title: "Category not found" };
-  return { title: { ar: category.name.ar, en: category.name.en }, description: category.description.en };
+  return { title: category.name.en, description: category.description.en };
 }
 
 export default async function CategoryPage({ params, searchParams }: Props) {
