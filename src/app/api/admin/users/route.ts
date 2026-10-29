@@ -69,7 +69,7 @@ export async function PATCH(request: NextRequest) {
   if (email === actor.email.toLowerCase() && body.active === false) {
     return NextResponse.json({error:"لا يمكنك تعطيل حسابك الحالي."},{status:400});
   }
-  if (target.role === "owner" && body.active === false) {
+  if (target.role === "owner" && (body.active === false || (body.role !== undefined && body.role !== "owner"))) {
     const owners = await db.prepare("SELECT COUNT(*) AS total FROM admin_users WHERE role = 'owner' AND active = 1").first<{total:number}>();
     if ((owners?.total ?? 0) <= 1) return NextResponse.json({error:"يجب الاحتفاظ بمالك نشط واحد على الأقل."},{status:400});
   }
