@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --background: #090817;
+  --foreground: #f7f5ff;
+  --muted: #aaa5c3;
+  --accent: #a78bfa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--background);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 80% 0%, rgba(109, 40, 217, 0.18), transparent 38rem),
+    var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  color: #fff;
+  background: #6d28d9;
+}
+
+.container {
+  width: min(1180px, calc(100% - 40px));
+  margin-inline: auto;
+}
+
+.nova-gradient {
+  background: linear-gradient(135deg, #c4b5fd 0%, #8b5cf6 45%, #6d28d9 100%);
+}
+
+.panel {
+  border: 1px solid rgba(196, 181, 253, 0.12);
+  background: rgba(24, 20, 47, 0.72);
+  backdrop-filter: blur(16px);
+}
+
+.game-placeholder {
+  background:
+    radial-gradient(circle at 30% 25%, rgba(167, 139, 250, 0.28), transparent 42%),
+    linear-gradient(145deg, #28204b, #141126 72%);
+}
