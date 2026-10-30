@@ -1,7 +1,14 @@
 # Prompt 9 — Asset storage setup and release checklist
 
-## Storage provider
-This branch uses Cloudflare R2 through the Worker binding `ASSETS_BUCKET`. The configured bucket name is `playnova-assets`. Uploaded bytes stay in R2; D1 stores metadata, hashes, review state, and byte counts.
+## Temporary no-R2 deployment mode
+- The deployment configuration currently omits the `ASSETS_BUCKET` binding so the Worker can deploy without activating paid-billing storage.
+- Admin asset uploads, approvals, and deletions return HTTP 503 with an explanatory message while storage is unavailable. The asset inventory remains readable.
+- Public asset delivery is unavailable until a storage provider is configured. Existing asset metadata in D1 is preserved; no migration or database deletion is performed.
+- Re-enable storage only after selecting a provider, configuring its binding, and testing it in staging.
+
+
+## Planned storage provider (not active)
+The original implementation was designed for Cloudflare R2 through the `ASSETS_BUCKET` binding, with `playnova-assets` as the bucket name. This integration is intentionally inactive in the temporary no-R2 deployment mode. D1 asset metadata is retained; uploaded file bytes cannot be accessed until a storage provider is configured.
 
 Before enabling uploads:
 1. Create the R2 bucket in the same Cloudflare account as the PlayNova Worker (Cloudflare Dashboard → R2 → Create bucket) named exactly `playnova-assets`, or run `npx wrangler r2 bucket create playnova-assets` from an authenticated project checkout.
