@@ -17,7 +17,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   if (!game) return { title: "Game not found", robots: { index: false, follow: false } };
   const locale = getLocale(query.lang);
   const path = `/games/${encodeURIComponent(game.slug)}`;
-  const description = game.description[locale].trim().slice(0, 160);
+  const description = `${game.title[locale]} — ${game.description[locale].trim()}`.slice(0, 160);
   return {
     title: game.title[locale],
     ...(description ? { description } : {}),
