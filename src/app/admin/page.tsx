@@ -61,6 +61,7 @@ export default async function AdminOverview({ searchParams }: {
         <nav>
           <Link className="active" href="/admin">نظرة عامة</Link>
           <Link href="/admin/analytics">التحليلات والأداء</Link>
+          {(admin.role === "owner" || admin.role === "administrator") && <Link href="/admin/monetization">الإعلانات وتحقيق الأرباح</Link>}
           <Link href="/admin/games">إدارة الألعاب</Link>
           <Link href="/admin/categories">التصنيفات</Link>
           <Link href="/admin/assets">الملفات والأصول</Link>
