@@ -14,8 +14,8 @@ type Category = { id: string; ar: string; en: string; icon: typeof Gamepad2 };
 type Game = {
   id: string;
   slug: string;
-  title: string;
-  category: string;
+  title: Record<Locale, string>;
+  category: string;\n  categoryName: Record<Locale, string>;
   thumbnail?: string;
   publishedAt: string;
   featured?: boolean;
