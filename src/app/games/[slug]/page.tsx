@@ -49,7 +49,7 @@ export default async function GamePage({ params, searchParams }: Props) {
     ? {
         home: "الرئيسية", categories: "التصنيفات", instructions: "طريقة اللعب",
         controls: "التحكم", compatibility: "التوافق", desktop: "الكمبيوتر",
-        mobile: game.launch.mode === "hosted-html5" && game.launch.permissions.orientationLock ? "الهاتف مع دعم اتجاه الشاشة المحدد" : "الهاتف واللمس حسب دعم اللعبة",
+        mobile: game.mobileSupport ? (game.orientation === "portrait" ? "الهاتف واللمس — الوضع الرأسي" : game.orientation === "landscape" ? "الهاتف واللمس — الوضع الأفقي" : "الهاتف واللمس") : "الكمبيوتر فقط حسب بيانات التوافق المسجلة",
         report: "الإبلاغ عن مشكلة", related: "ألعاب قد تعجبك", favorite: "إضافة للمفضلة", share: "مشاركة",
         unavailable: "اللعبة غير متاحة للتشغيل حاليًا",
         noGames: "اللعبة غير متاحة للتشغيل حاليًا.",
@@ -59,7 +59,7 @@ export default async function GamePage({ params, searchParams }: Props) {
     : {
         home: "Home", categories: "Categories", instructions: "How to play",
         controls: "Controls", compatibility: "Compatibility", desktop: "Desktop",
-        mobile: "Mobile and touch where supported", report: "Report a problem",
+        mobile: game.mobileSupport ? (game.orientation === "portrait" ? "Mobile and touch — portrait orientation" : game.orientation === "landscape" ? "Mobile and touch — landscape orientation" : "Mobile and touch") : "Desktop only according to the recorded compatibility data", report: "Report a problem",
         related: "You may also like", favorite: "Add to favorites", share: "Share",
         unavailable: "This game is currently unavailable", noGames: "This game is currently unavailable.",
         reportNote: "For issues with a published game, contact support once the reporting channel is enabled.",
