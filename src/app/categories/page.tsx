@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getLocale } from "@/lib/categories";
 import { getPublishedCategories } from "@/lib/games";
-import { absoluteUrl, jsonLd, localizedAlternates } from "@/lib/seo";
+import { absoluteUrl, jsonLd, localizedAlternates, localizedUrl } from "@/lib/seo";
 import LocaleDocument from "@/components/locale-document";
 
 type Props = { searchParams: Promise<{ lang?: string }> };
@@ -13,7 +13,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const categories = await getPublishedCategories();
   const title = locale === "ar" ? "تصنيفات ألعاب المتصفح" : "Browser Game Categories";
   const description = locale === "ar" ? "تصفح ألعاب المتصفح حسب النوع والتصنيف." : "Browse browser games by genre and category.";
-  const url = new URL(`/categories?lang=${locale}`, process.env.NEXT_PUBLIC_SITE_URL || "https://playnova.mzt112006mzt.workers.dev").toString();
+  const url = localizedUrl("/categories", locale);
   return {
     title, description,
     alternates: localizedAlternates("/categories", locale),
