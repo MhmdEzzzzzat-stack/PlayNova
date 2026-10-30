@@ -34,14 +34,23 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       };
 
   const games = query && !invalid ? await getPublishedGames() : [];
-  const normalizedQuery = query.toLocaleLowerCase(locale === "ar" ? "ar" : "en");
+  const searchLocale = locale === "ar" ? "ar" : "en";
+  const normalizedQuery = query.toLocaleLowerCase(searchLocale);
+  const normalizeField = (value: string) => value
+    .normalize("NFKC")
+    .replace(/[\\u064B-\\u065F\\u0670]/g, "")
+    .replace(/[ـ]/g, "")
+    .replace(/[<>]/g, "")
+    .replace(/\\s+/g, " ")
+    .trim()
+    .toLocaleLowerCase(searchLocale);
   const results = games.filter((game) => {
-    const searchable = [
+    const searchableFields = [
       game.title.ar, game.title.en, game.description.ar, game.description.en,
       game.instructions.ar, game.instructions.en, game.controls.ar, game.controls.en,
       ...game.categories, ...game.tags,
-    ].join(" ").toLocaleLowerCase(locale === "ar" ? "ar" : "en");
-    return normalizeSearchTerm(searchable).toLocaleLowerCase(locale === "ar" ? "ar" : "en").includes(normalizedQuery);
+    ];
+    return searchableFields.some((field) => normalizeField(field).includes(normalizedQuery));
   });
 
   return (
