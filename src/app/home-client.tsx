@@ -28,6 +28,7 @@ const categories: Category[] = [
   { id: "football", ar: "كرة القدم", en: "Football", icon: Trophy },
   { id: "sports", ar: "رياضة", en: "Sports", icon: Trophy },
   { id: "action", ar: "أكشن", en: "Action", icon: Swords },
+  { id: "strategy", ar: "استراتيجية", en: "Strategy", icon: Trophy },
   { id: "adventure", ar: "مغامرات", en: "Adventure", icon: Mountain },
   { id: "puzzle", ar: "ألغاز", en: "Puzzle", icon: Puzzle },
   { id: "shooting", ar: "تصويب", en: "Shooting", icon: Swords },
@@ -155,7 +156,7 @@ export default function HomePage({ initialLocale = "ar", games = [] }: { initial
     const matchesCategory = true;
     const term = query.trim().toLocaleLowerCase();
     return matchesCategory && (!term || `${game.title.ar} ${game.title.en} ${game.categoryName.ar} ${game.categoryName.en}`.toLocaleLowerCase().includes(term));
-  }), [query]);
+  }), [query, publishedGames]);
 
   const featured = filtered.filter((game) => game.featured);
   const popular = [...filtered].filter((game) => typeof game.popularity === "number").sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
