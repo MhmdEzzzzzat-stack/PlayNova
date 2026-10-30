@@ -11,7 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
 
   const entries: MetadataRoute.Sitemap = [
-    { url: SITE_URL, changeFrequency: "daily", priority: 1 },
+    { url: localizedUrl("/", "ar"), changeFrequency: "daily", priority: 1 },
     { url: localizedUrl("/", "en"), changeFrequency: "daily", priority: 0.9 },
     { url: localizedUrl("/categories", "ar"), changeFrequency: "weekly", priority: 0.8 },
     { url: localizedUrl("/categories", "en"), changeFrequency: "weekly", priority: 0.7 },
@@ -19,7 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: localizedUrl("/privacy", "en"), changeFrequency: "yearly", priority: 0.2 },
   ];
 
-  for (const slug of categorySlugs) {
+  if (categorySlugs.length > 0) {\n    entries.push(\n      { url: localizedUrl("/categories", "ar"), changeFrequency: "weekly", priority: 0.8 },\n      { url: localizedUrl("/categories", "en"), changeFrequency: "weekly", priority: 0.7 },\n    );\n  }\n\n  for (const slug of categorySlugs) {
     entries.push(
       { url: localizedUrl(`/categories/${encodeURIComponent(slug)}`, "ar"), changeFrequency: "weekly", priority: 0.7 },
       { url: localizedUrl(`/categories/${encodeURIComponent(slug)}`, "en"), changeFrequency: "weekly", priority: 0.6 },
