@@ -1,6 +1,8 @@
 import {NextRequest,NextResponse} from "next/server";
 import {requireAdmin} from "@/lib/admin-auth";
 import {getPlayNovaDb} from "@/lib/db";
+import {getCloudflareContext} from "@opennextjs/cloudflare";
+async function getFlags(){const {env}=await getCloudflareContext({async:true});return env as unknown as Record<string,string|undefined>;}
 
 const ids=["home_top","home_feed","game_below_player","game_sidebar","category_feed"] as const;
 const keys=["display_ads","game_ads","sponsored_games"] as const;
@@ -15,7 +17,7 @@ export async function GET(){
   db.prepare("SELECT SUM(event_type='ad_request') requests,SUM(event_type='impression') impressions,SUM(event_type='click') clicks FROM monetization_events").first(),
   db.prepare("SELECT COUNT(*) AS reports, SUM(amount_minor) AS amount_minor, MAX(currency) AS currency FROM monetization_revenue_imports").first()
  ]);
- const env=process.env;
+ const env=await getFlags();
  return NextResponse.json({settings:settings.results,placements:placements.results,metrics:{requests:eventCounts?.requests||0,impressions:eventCounts?.impressions||0,clicks:eventCounts?.clicks||0,revenueReports:revenue?.reports||0,revenueAvailable:(revenue?.reports||0)>0},readiness:{
   providerApproval:env.ADS_PROVIDER_APPROVED==="true",
   providerConfigured:env.ADS_PROVIDER_CONFIGURED==="true",
@@ -36,8 +38,9 @@ export async function PATCH(r:NextRequest){
   await db.prepare("UPDATE ad_placements SET enabled=?,updated_by=?,updated_at=CURRENT_TIMESTAMP WHERE placement_id=?").bind(b.enabled?1:0,actor.email,b.id).run();
   await db.prepare("INSERT INTO admin_audit_log_v2(actor_email,actor_role,action,entity_type,entity_id,details_json) VALUES(?,?, 'ad_placement_toggled','ad_placement',?,?)").bind(actor.email,actor.role,b.id,JSON.stringify({enabled:b.enabled})).run();
  }else if(b.kind==="feature"&&keys.includes(b.id as typeof keys[number])){
-  const readiness=process.env.ADS_PROVIDER_APPROVED==="true"&&process.env.ADS_PROVIDER_CONFIGURED==="true";
-  const gameReady=process.env.GAME_ADS_PROVIDER_APPROVED==="true"&&process.env.GAME_ADS_PROVIDER_CONFIGURED==="true";
+  const env=await getFlags();
+  const readiness=env.ADS_PROVIDER_APPROVED==="true"&&env.ADS_PROVIDER_CONFIGURED==="true";
+  const gameReady=env.GAME_ADS_PROVIDER_APPROVED==="true"&&env.GAME_ADS_PROVIDER_CONFIGURED==="true";
   if(b.enabled&&b.id==="display_ads"&&!readiness)return NextResponse.json({error:"لا يمكن التفعيل قبل اعتماد مزود الإعلانات وإكمال إعداداته."},{status:409});
   if(b.enabled&&b.id==="game_ads"&&!gameReady)return NextResponse.json({error:"لا يمكن تفعيل إعلانات الألعاب قبل اعتماد مزود SDK وإعداداته."},{status:409});
   await db.prepare("UPDATE monetization_settings SET enabled=?,updated_by=?,updated_at=CURRENT_TIMESTAMP WHERE setting_key=?").bind(b.enabled?1:0,actor.email,b.id).run();
