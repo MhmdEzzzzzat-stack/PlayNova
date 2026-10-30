@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import HomeClient from "./home-client";
 import { getLocale } from "@/lib/categories";
-import { localizedAlternates, localizedUrl } from "@/lib/seo";\nimport { getPublishedGames } from "@/lib/games";\nimport { getCategory } from "@/lib/categories";
+import { localizedAlternates, localizedUrl } from "@/lib/seo";
+import { getPublishedGames } from "@/lib/games";
+import { getCategory } from "@/lib/categories";
 
 export const dynamic = "force-dynamic";
 
