@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import LocaleDocument from "@/components/locale-document";
 import { categories, getLocale } from "@/lib/categories";
 import { getPublishedCategorySlugs } from "@/lib/games";
 import { localizedAlternates } from "@/lib/seo";
@@ -30,6 +31,7 @@ export default async function CategoriesPage({ searchParams }: Props) {
 
   return (
     <main className="directory-page" dir={ar ? "rtl" : "ltr"} lang={locale}>
+      <LocaleDocument locale={locale} />
       <div className="directory-container">
         <Link href={`/?lang=${locale}`} className="directory-back">{ar ? "← العودة للرئيسية" : "← Back to home"}</Link>
         <p className="directory-kicker">PlayNova</p>
