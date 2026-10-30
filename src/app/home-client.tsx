@@ -235,7 +235,7 @@ export default function HomePage({ initialLocale = "ar", games = [], availableCa
       <GameSection title={t.recommended} subtitle={t.recommendedRule} locale={locale} games={recommended} empty={t.empty} favorites={favorites} onFavorite={toggleFavorite} />
 
       <section className="container genre-section">
-        {visibleCategories.map((item) => {
+        {categories.map((item) => {
           const genreGames = filtered.filter((game) => game.category.toLowerCase() === item.id);
           return <GameSection key={item.id} title={item[locale]} subtitle={isArabic ? "تصفّح النوع" : "Explore this genre"} locale={locale} games={genreGames} empty={t.empty} favorites={favorites} onFavorite={toggleFavorite} />;
         })}
