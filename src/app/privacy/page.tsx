@@ -2,7 +2,7 @@ import Link from "next/link";
 import LocaleDocument from "@/components/locale-document";
 import { getLocale } from "@/lib/categories";
 import type { Metadata } from "next";
-import { localizedAlternates } from "@/lib/seo";
+import { localizedAlternates, localizedUrl } from "@/lib/seo";
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<{ lang?: string }> }): Promise<Metadata> {
   const params = await searchParams;
