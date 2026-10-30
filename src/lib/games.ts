@@ -1,5 +1,6 @@
 import "server-only";
 import { getPlayNovaDb } from "@/lib/db";
+import { getCategory } from "@/lib/categories";
 
 export type GameLocale = "ar" | "en";
 export type LaunchMode = "hosted-html5" | "authorized-embed" | "publisher-sdk";
@@ -99,19 +100,7 @@ export function validateGameLaunch(game: PublishedGame) {
 }
 
 export async function getPublishedCategorySlugs(): Promise<string[]> {
-  const db = await getPlayNovaDb();
-  const result = await db.prepare(`
-    SELECT DISTINCT c.slug
-    FROM categories c
-    JOIN game_categories gc ON gc.category_id = c.id
-    JOIN games g ON g.id = gc.game_id
-    WHERE c.visible = 1 AND g.status = 'published'
-      AND g.license_status = 'approved' AND g.moderation_status = 'active'
-      AND length(trim(g.authorization_reference)) > 0
-      AND (g.rights_expires_at IS NULL OR date(g.rights_expires_at) >= date('now'))
-    ORDER BY c.slug
-  `).all<{ slug: string }>();
-  return result.results.map((row) => row.slug);
+  return (await getPublishedCategories()).map((category) => category.slug);
 }
 
 export async function getPublishedGamesForCategory(slug: string): Promise<PublishedGame[]> {
@@ -150,11 +139,17 @@ export async function getPublishedCategories(): Promise<PublishedCategory[]> {
   const result = await db.prepare(`${PUBLIC_CATEGORY_SELECT} ORDER BY c.sort_order, c.name_en`).all<{
     slug: string; name_ar: string; name_en: string; description_ar: string; description_en: string;
   }>();
-  return result.results.map((row) => ({
-    slug: row.slug,
-    name: { ar: row.name_ar, en: row.name_en },
-    description: { ar: row.description_ar, en: row.description_en },
-  }));
+  return result.results.map((row) => {
+    const fallback = getCategory(row.slug);
+    return {
+      slug: row.slug,
+      name: { ar: row.name_ar || fallback?.name.ar || row.slug, en: row.name_en || fallback?.name.en || row.slug },
+      description: {
+        ar: row.description_ar.trim() || fallback?.description.ar || "",
+        en: row.description_en.trim() || fallback?.description.en || "",
+      },
+    };
+  }).filter((category) => category.description.ar.length >= 20 && category.description.en.length >= 20);
 }
 
 export async function getPublishedCategory(slug: string): Promise<PublishedCategory | undefined> {
@@ -162,9 +157,15 @@ export async function getPublishedCategory(slug: string): Promise<PublishedCateg
   const row = await db.prepare(`${PUBLIC_CATEGORY_SELECT} AND c.slug = ? LIMIT 1`).bind(slug).first<{
     slug: string; name_ar: string; name_en: string; description_ar: string; description_en: string;
   }>();
-  return row ? {
+  if (!row) return undefined;
+  const fallback = getCategory(row.slug);
+  const category = {
     slug: row.slug,
-    name: { ar: row.name_ar, en: row.name_en },
-    description: { ar: row.description_ar, en: row.description_en },
-  } : undefined;
+    name: { ar: row.name_ar || fallback?.name.ar || row.slug, en: row.name_en || fallback?.name.en || row.slug },
+    description: {
+      ar: row.description_ar.trim() || fallback?.description.ar || "",
+      en: row.description_en.trim() || fallback?.description.en || "",
+    },
+  };
+  return category.description.ar.length >= 20 && category.description.en.length >= 20 ? category : undefined;
 }
