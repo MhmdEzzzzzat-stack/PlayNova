@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {trackAnalytics} from "@/lib/analytics-client";
 
 const FAVORITES_KEY = "playnova-favorites";
 const LEGACY_FAVORITES_KEY = "playnova:favorites";
@@ -41,6 +42,7 @@ export default function GameActions({
       const next = current.includes(slug) ? current.filter((item) => item !== slug) : [...current, slug];
       localStorage.setItem(FAVORITES_KEY, JSON.stringify([...new Set(next)]));
       setFavorites(next);
+      trackAnalytics(next.includes(slug)?"favorite_add":"favorite_remove",{slug});
       setMessage(locale === "ar"
         ? (next.includes(slug) ? "تمت الإضافة إلى المفضلة." : "تمت الإزالة من المفضلة.")
         : (next.includes(slug) ? "Added to favorites." : "Removed from favorites."));

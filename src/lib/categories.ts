@@ -6,6 +6,7 @@ export type CategoryDefinition = {
 };
 
 export const categories: CategoryDefinition[] = [
+  { slug: "strategy", name: { ar: "استراتيجية", en: "Strategy" }, description: { ar: "خطط بعناية واتخذ قراراتك للفوز بالتحديات.", en: "Plan carefully and make strategic decisions to overcome challenges." } },
   { slug: "action", name: { ar: "أكشن", en: "Action" }, description: { ar: "ألعاب مليئة بالتحدي والحركة والقتال.", en: "Fast-paced games built around challenges, movement, and combat." } },
   { slug: "adventure", name: { ar: "مغامرات", en: "Adventure" }, description: { ar: "استكشف عوالم جديدة وخض تجارب ومهام متنوعة.", en: "Explore new worlds, stories, and exciting quests." } },
   { slug: "racing", name: { ar: "سباق", en: "Racing" }, description: { ar: "تحديات السرعة والقيادة والمنافسة على المركز الأول.", en: "Speed, driving challenges, and races for the top spot." } },

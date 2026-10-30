@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import {trackAnalytics} from "@/lib/analytics-client";
 import type { LaunchMode, GamePermissions } from "@/lib/games";
 
 type LaunchConfig = {
@@ -35,11 +36,13 @@ function getSafeLaunchUrl(config: LaunchConfig) {
 
 export default function GamePlayer({ slug, locale, launch, title, unavailableText, emptyText }: Props) {
   const frameRef = useRef<HTMLIFrameElement>(null);
+  const loadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [started, setStarted] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const safeUrl = getSafeLaunchUrl(launch);
   const ar = locale === "ar";
+  useEffect(()=>()=>{if(loadTimer.current)clearTimeout(loadTimer.current);},[]);
   const labels = ar
     ? { fullscreen: "ملء الشاشة", start: "ابدأ اللعبة", loading: "جارٍ تحميل اللعبة…", failed: "تعذر تحميل اللعبة.", retry: "إعادة المحاولة", note: "يُضاف السجل محليًا عند تحميل إطار اللعبة، وليس عند مجرد فتح الصفحة." }
     : { fullscreen: "Fullscreen", start: "Start game", loading: "Loading game…", failed: "Game could not be loaded.", retry: "Retry", note: "Recent history is saved locally when the game frame loads, not on a page view alone." };
@@ -60,11 +63,15 @@ export default function GamePlayer({ slug, locale, launch, title, unavailableTex
 
   const start = () => {
     if (!safeUrl) {
+      trackAnalytics("load_failure",{slug,failureCode:"blocked"});
       setFailed(true);
       return;
     }
     setFailed(false);
     setLoaded(false);
+    trackAnalytics("game_start",{slug});
+    if(loadTimer.current)clearTimeout(loadTimer.current);
+    loadTimer.current=setTimeout(()=>{setFailed(true);setStarted(false);trackAnalytics("load_failure",{slug,failureCode:"timeout"});},20000);
     setStarted(true);
   };
 
@@ -72,7 +79,7 @@ export default function GamePlayer({ slug, locale, launch, title, unavailableTex
     setFailed(false);
     setLoaded(false);
     setStarted(false);
-    window.setTimeout(() => setStarted(true), 0);
+    window.setTimeout(start, 0);
   };
 
   const fullscreen = async () => {
@@ -81,7 +88,6 @@ export default function GamePlayer({ slug, locale, launch, title, unavailableTex
     try {
       await frame.requestFullscreen();
     } catch {
-      setFailed(true);
     }
   };
 
@@ -117,8 +123,8 @@ export default function GamePlayer({ slug, locale, launch, title, unavailableTex
             allowFullScreen={launch.permissions.fullscreen}
             referrerPolicy="no-referrer"
             loading="lazy"
-            onLoad={() => { setLoaded(true); recordLaunch(); }}
-            onError={() => setFailed(true)}
+            onLoad={() => { if(loadTimer.current)clearTimeout(loadTimer.current);setLoaded(true);trackAnalytics("load_success",{slug});recordLaunch(); }}
+            onError={() => { if(loadTimer.current)clearTimeout(loadTimer.current);setFailed(true);trackAnalytics("load_failure",{slug,failureCode:"network"}); }}
           />
         )}
       </div>

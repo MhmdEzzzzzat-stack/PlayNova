@@ -1,5 +1,6 @@
 import "server-only";
 import { getPlayNovaDb } from "@/lib/db";
+import { getCategory } from "@/lib/categories";
 
 export type GameLocale = "ar" | "en";
 export type LaunchMode = "hosted-html5" | "authorized-embed" | "publisher-sdk";
@@ -13,6 +14,10 @@ export type PublishedGame = {
   categories: string[];
   tags: string[];
   thumbnail?: string;
+  publishedAt?: string;
+  featured: boolean;
+  mobileSupport: boolean;
+  orientation: "any" | "portrait" | "landscape";
   launch: {
     mode: LaunchMode; url: string; allowedOrigin: string;
     permissions: GamePermissions; authorizationReference: string;
@@ -25,6 +30,7 @@ type GameRow = {
   thumbnail_url: string | null; launch_mode: LaunchMode; launch_url: string; allowed_origin: string;
   authorization_reference: string; permissions_fullscreen: number; permissions_pointer_lock: number;
   permissions_orientation_lock: number; categories: string | null; tags: string | null;
+  featured: number; published_at: string | null; mobile_support: number; orientation: "any" | "portrait" | "landscape";
 };
 
 const mapGame = (row: GameRow): PublishedGame => ({
@@ -35,6 +41,10 @@ const mapGame = (row: GameRow): PublishedGame => ({
   controls: { ar: row.controls_ar, en: row.controls_en },
   categories: row.categories ? row.categories.split(",") : [],
   tags: row.tags ? row.tags.split(",") : [],
+  featured: Boolean(row.featured),
+  mobileSupport: Boolean(row.mobile_support),
+  orientation: row.orientation,
+  ...(row.published_at ? { publishedAt: row.published_at } : {}),
   ...(row.thumbnail_url ? { thumbnail: row.thumbnail_url } : {}),
   launch: {
     mode: row.launch_mode, url: row.launch_url, allowedOrigin: row.allowed_origin,
@@ -49,11 +59,15 @@ const mapGame = (row: GameRow): PublishedGame => ({
 
 const SELECT_PUBLISHED = `
 SELECT g.*,
-  (SELECT group_concat(gc.category_id) FROM game_categories gc WHERE gc.game_id = g.id) AS categories,
+  (SELECT group_concat(c.slug) FROM game_categories gc JOIN categories c ON c.id = gc.category_id WHERE gc.game_id = g.id AND c.visible = 1) AS categories,
   (SELECT group_concat(gt.tag) FROM game_tags gt WHERE gt.game_id = g.id) AS tags
 FROM games g
-WHERE g.status = 'published' AND g.license_status = 'approved'
+WHERE g.status = 'published' AND g.license_status = 'approved' AND g.moderation_status = 'active'
   AND length(trim(g.authorization_reference)) > 0
+  AND (g.rights_expires_at IS NULL OR date(g.rights_expires_at) >= date('now'))
+  AND length(trim(g.description_ar)) >= 40 AND length(trim(g.description_en)) >= 40
+  AND length(trim(g.instructions_ar)) >= 10 AND length(trim(g.instructions_en)) >= 10
+  AND length(trim(g.controls_ar)) >= 3 AND length(trim(g.controls_en)) >= 3
 `;
 
 export async function getPublishedGame(slug: string): Promise<PublishedGame | undefined> {
@@ -86,4 +100,78 @@ export function validateGameLaunch(game: PublishedGame) {
       url.origin === allowedOrigin.origin && Boolean(game.launch.authorizationReference.trim()) &&
       ["hosted-html5", "authorized-embed", "publisher-sdk"].includes(game.launch.mode);
   } catch { return false; }
+}
+
+export async function getPublishedCategorySlugs(): Promise<string[]> {
+  return (await getPublishedCategories()).map((category) => category.slug);
+}
+
+export async function getPublishedGamesForCategory(slug: string): Promise<PublishedGame[]> {
+  const db = await getPlayNovaDb();
+  const result = await db.prepare(`
+    ${SELECT_PUBLISHED}
+    AND EXISTS (
+      SELECT 1 FROM game_categories gc
+      JOIN categories c ON c.id = gc.category_id
+      WHERE gc.game_id = g.id AND c.slug = ? AND c.visible = 1
+    )
+    ORDER BY g.featured DESC, g.published_at DESC
+  `).bind(slug).all<GameRow>();
+  return result.results.map(mapGame);
+}
+
+export type PublishedCategory = {
+  slug: string;
+  name: Record<GameLocale, string>;
+  description: Record<GameLocale, string>;
+};
+
+const PUBLIC_CATEGORY_SELECT = `
+  SELECT DISTINCT c.slug, c.name_ar, c.name_en, c.description_ar, c.description_en
+  FROM categories c
+  JOIN game_categories gc ON gc.category_id = c.id
+  JOIN games g ON g.id = gc.game_id
+  WHERE c.visible = 1 AND g.status = 'published'
+    AND g.license_status = 'approved' AND g.moderation_status = 'active'
+    AND length(trim(g.authorization_reference)) > 0
+    AND (g.rights_expires_at IS NULL OR date(g.rights_expires_at) >= date('now'))
+    AND length(trim(g.description_ar)) >= 40 AND length(trim(g.description_en)) >= 40
+    AND length(trim(g.instructions_ar)) >= 10 AND length(trim(g.instructions_en)) >= 10
+    AND length(trim(g.controls_ar)) >= 3 AND length(trim(g.controls_en)) >= 3
+`;
+
+export async function getPublishedCategories(): Promise<PublishedCategory[]> {
+  const db = await getPlayNovaDb();
+  const result = await db.prepare(`${PUBLIC_CATEGORY_SELECT} ORDER BY c.sort_order, c.name_en`).all<{
+    slug: string; name_ar: string; name_en: string; description_ar: string; description_en: string;
+  }>();
+  return result.results.map((row) => {
+    const fallback = getCategory(row.slug);
+    return {
+      slug: row.slug,
+      name: { ar: row.name_ar || fallback?.name.ar || row.slug, en: row.name_en || fallback?.name.en || row.slug },
+      description: {
+        ar: row.description_ar.trim() || fallback?.description.ar || "",
+        en: row.description_en.trim() || fallback?.description.en || "",
+      },
+    };
+  }).filter((category) => category.description.ar.length >= 20 && category.description.en.length >= 20);
+}
+
+export async function getPublishedCategory(slug: string): Promise<PublishedCategory | undefined> {
+  const db = await getPlayNovaDb();
+  const row = await db.prepare(`${PUBLIC_CATEGORY_SELECT} AND c.slug = ? LIMIT 1`).bind(slug).first<{
+    slug: string; name_ar: string; name_en: string; description_ar: string; description_en: string;
+  }>();
+  if (!row) return undefined;
+  const fallback = getCategory(row.slug);
+  const category = {
+    slug: row.slug,
+    name: { ar: row.name_ar || fallback?.name.ar || row.slug, en: row.name_en || fallback?.name.en || row.slug },
+    description: {
+      ar: row.description_ar.trim() || fallback?.description.ar || "",
+      en: row.description_en.trim() || fallback?.description.en || "",
+    },
+  };
+  return category.description.ar.length >= 20 && category.description.en.length >= 20 ? category : undefined;
 }

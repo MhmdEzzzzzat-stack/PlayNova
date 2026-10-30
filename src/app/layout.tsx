@@ -1,28 +1,31 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import AnalyticsConsent from "./analytics-consent";
+import SiteVitals from "./site-vitals";
+import { SITE_URL } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: {
-    default: "PlayNova — العب واكتشف",
-    template: "%s | PlayNova",
-  },
-  description:
-    "اكتشف عالمًا من ألعاب المتصفح. منصة PlayNova قيد التطوير.",
+  metadataBase: new URL(SITE_URL),
+  title: { default: "PlayNova — العب واكتشف", template: "%s | PlayNova" },
+  description: "اكتشف ألعاب متصفح متنوعة على PlayNova. تصفح الألعاب والتصنيفات بالعربية والإنجليزية.",
   applicationName: "PlayNova",
-  robots: {
-    index: false,
-    follow: false,
+  openGraph: {
+    type: "website",
+    siteName: "PlayNova",
+    title: "PlayNova — العب واكتشف",
+    description: "اكتشف ألعاب متصفح متنوعة بالعربية والإنجليزية.",
+    url: SITE_URL,
+    locale: "ar_EG",
+    alternateLocale: ["en_US"],
   },
+  ...(process.env.GOOGLE_SITE_VERIFICATION ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } } : {}),
+  robots: { index: true, follow: true },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ar" dir="rtl">
-      <body>{children}</body>
+      <body>{children}<AnalyticsConsent /><SiteVitals /></body>
     </html>
   );
 }
