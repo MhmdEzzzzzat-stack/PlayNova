@@ -65,6 +65,9 @@ FROM games g
 WHERE g.status = 'published' AND g.license_status = 'approved' AND g.moderation_status = 'active'
   AND length(trim(g.authorization_reference)) > 0
   AND (g.rights_expires_at IS NULL OR date(g.rights_expires_at) >= date('now'))
+  AND length(trim(g.description_ar)) >= 40 AND length(trim(g.description_en)) >= 40
+  AND length(trim(g.instructions_ar)) >= 10 AND length(trim(g.instructions_en)) >= 10
+  AND length(trim(g.controls_ar)) >= 3 AND length(trim(g.controls_en)) >= 3
 `;
 
 export async function getPublishedGame(slug: string): Promise<PublishedGame | undefined> {
@@ -132,6 +135,9 @@ const PUBLIC_CATEGORY_SELECT = `
     AND g.license_status = 'approved' AND g.moderation_status = 'active'
     AND length(trim(g.authorization_reference)) > 0
     AND (g.rights_expires_at IS NULL OR date(g.rights_expires_at) >= date('now'))
+    AND length(trim(g.description_ar)) >= 40 AND length(trim(g.description_en)) >= 40
+    AND length(trim(g.instructions_ar)) >= 10 AND length(trim(g.instructions_en)) >= 10
+    AND length(trim(g.controls_ar)) >= 3 AND length(trim(g.controls_en)) >= 3
 `;
 
 export async function getPublishedCategories(): Promise<PublishedCategory[]> {
