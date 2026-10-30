@@ -97,14 +97,14 @@ function GameSection({
         <div className="game-grid">
           {games.map((game) => (
             <article key={game.id} className="game-card">
-              <Link href={`/games/${game.slug}`} className="game-card-link" aria-label={game.title}>
+              <Link href={`/games/${game.slug}?lang=${locale}`} className="game-card-link" aria-label={game.title[locale]}>
                 <div className="game-thumb">
-                  {game.thumbnail ? <Image src={game.thumbnail} alt="" fill sizes="(max-width: 640px) 50vw, 25vw" loading="lazy" unoptimized /> : <Gamepad2 size={42} />}
-                  <span className="game-category">{game.category}</span>
+                  {game.thumbnail ? <Image src={game.thumbnail} alt={game.title[locale]} fill sizes="(max-width: 640px) 50vw, 25vw" loading="lazy" unoptimized /> : <Gamepad2 size={42} />}
+                  <span className="game-category">{game.categoryName[locale]}</span>
                 </div>
-                <div className="game-card-copy"><h3>{game.title}</h3><span>{game.category}</span></div>
+                <div className="game-card-copy"><h3>{game.title[locale]}</h3><span>{game.categoryName[locale]}</span></div>
               </Link>
-              <button type="button" className="favorite-button" onClick={() => onFavorite(game.id)} aria-label={`${locale === "ar" ? "تبديل المفضلة" : "Toggle favorite"}: ${game.title}`} aria-pressed={favorites.includes(game.id)}>
+              <button type="button" className="favorite-button" onClick={() => onFavorite(game.id)} aria-label={`${locale === "ar" ? "تبديل المفضلة" : "Toggle favorite"}: ${game.title[locale]}`} aria-pressed={favorites.includes(game.id)}>
                 <Heart size={17} fill={favorites.includes(game.id) ? "currentColor" : "none"} />
               </button>
             </article>
@@ -115,7 +115,7 @@ function GameSection({
   );
 }
 
-export default function HomePage({ initialLocale = "ar" }: { initialLocale?: Locale }) {
+export default function HomePage({ initialLocale = "ar", games = [] }: { initialLocale?: Locale; games?: Game[] }) {\n  const publishedGames = games;
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const [query, setQuery] = useState("");
   
@@ -156,7 +156,7 @@ export default function HomePage({ initialLocale = "ar" }: { initialLocale?: Loc
   const filtered = useMemo(() => publishedGames.filter((game) => {
     const matchesCategory = true;
     const term = query.trim().toLocaleLowerCase();
-    return matchesCategory && (!term || `${game.title} ${game.category}`.toLocaleLowerCase().includes(term));
+    return matchesCategory && (!term || `${game.title.ar} ${game.title.en} ${game.categoryName.ar} ${game.categoryName.en}`.toLocaleLowerCase().includes(term));
   }), [query]);
 
   const featured = filtered.filter((game) => game.featured);
