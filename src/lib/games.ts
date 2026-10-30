@@ -24,7 +24,7 @@ type GameRow = {
   instructions_ar: string; instructions_en: string; controls_ar: string; controls_en: string;
   thumbnail_url: string | null; launch_mode: LaunchMode; launch_url: string; allowed_origin: string;
   authorization_reference: string; permissions_fullscreen: number; permissions_pointer_lock: number;
-  permissions_orientation_lock: number; categories: string | null; tags: string | null;
+  permissions_orientation_lock: number; categories: string | null; tags: string | null;\n  featured: number; published_at: string | null;
 };
 
 const mapGame = (row: GameRow): PublishedGame => ({
@@ -34,7 +34,7 @@ const mapGame = (row: GameRow): PublishedGame => ({
   instructions: { ar: row.instructions_ar, en: row.instructions_en },
   controls: { ar: row.controls_ar, en: row.controls_en },
   categories: row.categories ? row.categories.split(",") : [],
-  tags: row.tags ? row.tags.split(",") : [],
+  tags: row.tags ? row.tags.split(",") : [],\n  featured: Boolean(row.featured),\n  ...(row.published_at ? { publishedAt: row.published_at } : {}),
   ...(row.thumbnail_url ? { thumbnail: row.thumbnail_url } : {}),
   launch: {
     mode: row.launch_mode, url: row.launch_url, allowedOrigin: row.allowed_origin,
