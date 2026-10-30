@@ -1,5 +1,12 @@
 # Prompt 9 — Asset storage setup and release checklist
 
+## Temporary no-R2 deployment mode
+- The deployment configuration currently omits the `ASSETS_BUCKET` binding so the Worker can deploy without activating paid-billing storage.
+- Admin asset uploads, approvals, and deletions return HTTP 503 with an explanatory message while storage is unavailable. The asset inventory remains readable.
+- Public asset delivery is unavailable until a storage provider is configured. Existing asset metadata in D1 is preserved; no migration or database deletion is performed.
+- Re-enable storage only after selecting a provider, configuring its binding, and testing it in staging.
+
+
 ## Storage provider
 This branch uses Cloudflare R2 through the Worker binding `ASSETS_BUCKET`. The configured bucket name is `playnova-assets`. Uploaded bytes stay in R2; D1 stores metadata, hashes, review state, and byte counts.
 
