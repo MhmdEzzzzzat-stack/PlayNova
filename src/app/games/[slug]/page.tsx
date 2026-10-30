@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import LocaleDocument from "@/components/locale-document";
 import { notFound } from "next/navigation";
 import { getPublishedGame, getRelatedGames } from "@/lib/games";
 import { getLocale } from "@/lib/categories";
@@ -83,6 +84,7 @@ export default async function GamePage({ params, searchParams }: Props) {
 
   return (
     <main className="game-page" dir={ar ? "rtl" : "ltr"} lang={locale}>
+      <LocaleDocument locale={locale} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbData) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(gameData) }} />
       <GameViewEvent slug={game.slug} />
