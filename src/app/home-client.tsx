@@ -113,8 +113,8 @@ function GameSection({
   );
 }
 
-export default function HomePage({ initialLocale = "ar", games = [] }: { initialLocale?: Locale; games?: Game[] }) {
-  const publishedGames = games;
+export default function HomePage({ initialLocale = "ar", games = [], availableCategoryIds = [] }: { initialLocale?: Locale; games?: Game[]; availableCategoryIds?: string[] }) {
+  const publishedGames = games;\n  const visibleCategories = categories.filter((item) => availableCategoryIds.includes(item.id));
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const [query, setQuery] = useState("");
   
@@ -201,7 +201,7 @@ export default function HomePage({ initialLocale = "ar", games = [] }: { initial
         <div className="section-heading"><div><p className="section-kicker">{t.browse}</p><h2 className="section-title">{t.categories}</h2></div></div>
         <div className="category-list">
           <Link href={"/categories?lang=" + locale} className="category-chip">{t.all}</Link>
-          {categories.map((item) => { const Icon = item.icon; return <Link key={item.id} href={"/categories/" + item.id + "?lang=" + locale} className="category-chip"><Icon size={16} />{item[locale]}</Link>; })}
+          {visibleCategories.map((item) => { const Icon = item.icon; return <Link key={item.id} href={"/categories/" + item.id + "?lang=" + locale} className="category-chip"><Icon size={16} />{item[locale]}</Link>; })}
         </div>
       </section>
 
