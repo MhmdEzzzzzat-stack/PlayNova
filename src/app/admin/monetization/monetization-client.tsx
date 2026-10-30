@@ -1,0 +1,23 @@
+"use client";
+import {useEffect,useState} from "react";
+type Row={setting_key:string;enabled:number;provider:string;provider_approved:number;configured:number};
+type Placement={placement_id:string;enabled:number;format:string;label_required:number;max_height_px:number};
+type Data={settings:Row[];placements:Placement[];readiness:{providerApproval:boolean;providerConfigured:boolean;providerName:string;gamingAdsApproval:boolean;gamingAdsConfigured:boolean;note:string}};
+const names:Record<string,string>={display_ads:"إعلانات العرض",game_ads:"إعلانات داخل الألعاب (SDK)",sponsored_games:"الألعاب المدعومة / الشراكات"};
+const placements:Record<string,string>={home_top:"أعلى الصفحة الرئيسية",home_feed:"داخل قائمة الرئيسية",game_below_player:"أسفل مشغل اللعبة",game_sidebar:"جانب مشغل اللعبة",category_feed:"داخل صفحات التصنيفات"};
+export default function MonetizationClient(){
+ const [data,setData]=useState<Data|null>(null),[error,setError]=useState(""),[busy,setBusy]=useState("");
+ async function load(){try{const r=await fetch("/api/admin/monetization",{cache:"no-store"});if(!r.ok)throw new Error("تعذر تحميل الإعدادات.");setData(await r.json() as Data);}catch(e){setError(e instanceof Error?e.message:"حدث خطأ.");}}
+ useEffect(()=>{void load();},[]);
+ async function toggle(kind:"feature"|"placement",id:string,enabled:boolean){setBusy(id);setError("");try{const r=await fetch("/api/admin/monetization",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind,id,enabled})});const b=await r.json() as {error?:string};if(!r.ok)throw new Error(b.error||"تعذر حفظ الإعداد.");await load();}catch(e){setError(e instanceof Error?e.message:"حدث خطأ.");}finally{setBusy("");}}
+ if(!data)return <section className="admin-card"><p>{error||"جارٍ تحميل إعدادات الربح…"}</p></section>;
+ const ready=data.readiness.providerApproval&&data.readiness.providerConfigured;
+ const gameReady=data.readiness.gamingAdsApproval&&data.readiness.gamingAdsConfigured;
+ return <div style={{display:"grid",gap:18}}>
+ {error&&<p role="alert" className="admin-card">{error}</p>}
+ <section className="admin-card"><h2>حالة مزودي الإعلانات</h2><p>مزود العرض: <strong>{data.readiness.providerName}</strong></p><p>اعتماد المزود: {data.readiness.providerApproval?"تم تأكيده في إعدادات البيئة":"غير مؤكد"}</p><p>اكتمال الإعداد: {data.readiness.providerConfigured?"مكتمل":"غير مكتمل"}</p><p>إعلانات الألعاب: {gameReady?"جاهزة من ناحية الإعداد فقط":"غير معتمدة أو غير مهيأة"}</p><small>{data.readiness.note}</small></section>
+ <section className="admin-card"><h2>التحكم في مصادر الدخل</h2>{data.settings.map(s=><div key={s.setting_key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,padding:"14px 0",borderBottom:"1px solid var(--border)"}}><div><strong>{names[s.setting_key]||s.setting_key}</strong><p>{s.setting_key==="display_ads"?(ready?"المزود جاهز؛ التفعيل ما زال يدويًا.":"يتطلب موافقة شبكة الإعلانات وإعدادها."):s.setting_key==="game_ads"?(gameReady?"الإعدادات الخارجية جاهزة؛ لا يوجد SDK مدمج حتى الآن.":"يتطلب موافقة مزود ألعاب وشروط كل لعبة."):"محتوى مدعوم يجب وسمه بوضوح ومراجعته قبل النشر."}</p><small>الحالة: {s.enabled?"مفعّل":"متوقف"}</small></div><button type="button" disabled={!!busy||(s.setting_key==="display_ads"&&!ready)||(s.setting_key==="game_ads"&&!gameReady)} onClick={()=>void toggle("feature",s.setting_key,!s.enabled)}>{busy===s.setting_key?"جارٍ الحفظ…":s.enabled?"إيقاف":"تفعيل"}</button></div>)}</section>
+ <section className="admin-card"><h2>مواضع الإعلانات</h2><p>لا يسمح النظام بوضع إعلان فوق أزرار اللعب أو فوق إطار اللعبة أو إخفاء زر الإغلاق.</p>{data.placements.map(p=><div key={p.placement_id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,padding:"12px 0",borderBottom:"1px solid var(--border)"}}><div><strong>{placements[p.placement_id]||p.placement_id}</strong><p>{p.format} · حد الارتفاع {p.max_height_px}px · وسم إعلاني مطلوب</p><small>{p.enabled?"مسموح لهذا الموضع (مع بقاء بوابة المزود مطلوبة)":"متوقف"}</small></div><button type="button" disabled={!!busy} onClick={()=>void toggle("placement",p.placement_id,!p.enabled)}>{busy===p.placement_id?"جارٍ الحفظ…":p.enabled?"إيقاف":"السماح بالموضع"}</button></div>)}</section>
+ <section className="admin-card"><h2>القياس المالي</h2><p>طلبات الإعلانات ومرات الظهور والنقرات لا تساوي الأرباح. الإيرادات: <strong>غير متاحة</strong> حتى استيراد تقرير رسمي موثّق من مزود معتمد.</p><p>لا توجد أرقام تجريبية أو تقديرات أرباح في لوحة التحكم.</p></section>
+ </div>;
+}
