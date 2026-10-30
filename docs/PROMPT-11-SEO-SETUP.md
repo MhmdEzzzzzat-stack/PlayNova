@@ -6,7 +6,8 @@
 - Published games are loaded from D1 on the server and shown on the homepage and category pages. Game detail content is server-rendered and crawlable.
 - Game and category URLs retain the same stable slug and expose Arabic/English variants using explicit `lang` query parameters.
 - Self-referencing canonical URLs and reciprocal `hreflang` values are emitted for Arabic, English, and `x-default`.
-- Publishing now requires a substantive Arabic and English description (at least 40 characters), useful instructions and controls in both languages, and at least one category. Public pages also exclude records with expired authorization dates.\n- Unique localized titles/descriptions are generated from approved game metadata and curated category descriptions.
+- Publishing now requires a substantive Arabic and English description (at least 40 characters), useful instructions and controls in both languages, and at least one category. Public pages also exclude records with expired authorization dates.
+- Unique localized titles/descriptions are generated from approved game metadata and curated category descriptions.
 - Open Graph and Twitter metadata are emitted; game thumbnails are used only when a verified thumbnail exists.
 - `VideoGame` structured data uses actual title, description, language, categories and optional verified image. `BreadcrumbList` reflects visible navigation. No reviews, aggregate ratings, offers or fake popularity are generated.
 - Breadcrumb navigation and internal links connect games, categories, and related games.
