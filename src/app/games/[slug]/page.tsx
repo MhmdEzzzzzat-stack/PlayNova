@@ -7,6 +7,7 @@ import { getLocale } from "@/lib/categories";
 import GamePlayer from "./player";
 import GameActions from "./actions";
 import { GameViewEvent } from "@/components/analytics-events";
+import AdPlacement from "@/components/ad-placement";
 import { absoluteUrl, jsonLd, localizedAlternates, localizedUrl } from "@/lib/seo";
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ lang?: string }> };
@@ -105,7 +106,7 @@ export default async function GamePage({ params, searchParams }: Props) {
           <section className="game-info-panel"><h2>{text.compatibility}</h2><p>{text.desktop}</p><p>{text.mobile}</p></section>
           <section className="game-info-panel"><h2>{text.report}</h2><p>{text.reportNote}</p></section>
         </div>
-        <aside className="game-ad-slot" aria-label={text.ads}>{text.ads}</aside>
+        <AdPlacement placementId="game_below_player" locale={locale} />
         {related.length > 0 && <section className="related-games"><h2>{text.related}</h2><div>{related.map((item) => <Link key={item.slug} href={`/games/${item.slug}?lang=${locale}`}>{item.title[locale]}</Link>)}</div></section>}
       </div>
     </main>
