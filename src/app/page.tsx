@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import HomeClient from "./home-client";
 import { getLocale } from "@/lib/categories";
-import { localizedAlternates, localizedUrl } from "@/lib/seo";
+import { localizedAlternates, localizedUrl } from "@/lib/seo";\nimport { getPublishedGames } from "@/lib/games";\nimport { getCategory } from "@/lib/categories";
 
 export const dynamic = "force-dynamic";
 
@@ -26,5 +26,20 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
 export default async function HomePage({ searchParams }: Props) {
   const params = await searchParams;
-  return <HomeClient initialLocale={getLocale(params.lang)} />;
+  const games = await getPublishedGames();
+  const homeGames = games.map((game) => {
+    const category = game.categories[0] || "";
+    const categoryInfo = getCategory(category);
+    return {
+      id: game.slug,
+      slug: game.slug,
+      title: game.title,
+      category,
+      categoryName: categoryInfo?.name || { ar: "ألعاب", en: "Games" },
+      ...(game.thumbnail ? { thumbnail: game.thumbnail } : {}),
+      publishedAt: game.publishedAt || "",
+      featured: game.featured,
+    };
+  });
+  return <HomeClient initialLocale={getLocale(params.lang)} games={homeGames} />;
 }
