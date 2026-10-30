@@ -14,12 +14,6 @@
       "migrations_dir": "migrations"
     }
   ],
-  "r2_buckets": [
-    {
-      "binding": "ASSETS_BUCKET",
-      "bucket_name": "playnova-assets"
-    }
-  ],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
