@@ -19,9 +19,9 @@ export async function GET(){
 }
 export async function POST(request:NextRequest){
  if(!sameOrigin(request))return no();
+ let actor;try{actor=await requireAdmin("editor");}catch{return no();}
  return NextResponse.json({error:"رفع الملفات غير متاح مؤقتًا حتى إعداد خدمة تخزين بدون بطاقة دفع."},{status:503});
  const contentLength=Number(request.headers.get("content-length")||0);if(contentLength>51*1024*1024)return bad("حجم الطلب يتجاوز الحد الأقصى.");
- let actor;try{actor=await requireAdmin("editor");}catch{return no();}
  let form:FormData;try{form=await request.formData();}catch{return bad("تعذر قراءة نموذج الرفع.");}
  const file=form.get("file"),gameId=String(form.get("gameId")||"").trim(),kind=String(form.get("kind")||"");
  if(!(file instanceof File)||!["thumbnail","screenshot","html5_package"].includes(kind))return bad("اختر ملفًا ونوع أصل صالحًا.");
