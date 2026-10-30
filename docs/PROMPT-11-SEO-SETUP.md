@@ -11,7 +11,7 @@
 - `VideoGame` structured data uses actual title, description, language, categories and optional verified image. `BreadcrumbList` reflects visible navigation. No reviews, aggregate ratings, offers or fake popularity are generated.
 - Breadcrumb navigation and internal links connect games, categories, and related games.
 - `/sitemap.xml` is generated from published, license-approved, active games and categories that contain those games. Both language variants are included. No drafts or suspended games.
-- `/robots.txt` allows public pages and disallows administrative, API, favorites, recent-history and internal search routes.
+- `/robots.txt` allows public pages and approved public image assets, and disallows admin pages plus private admin/analytics APIs. Search, favorites and recent-history pages remain crawlable so crawlers can read their `noindex` directives.
 - Admin pages receive `noindex,nofollow`; favorites/recent/search remain noindex.
 - Empty category pages are noindex and omitted from the sitemap. Search URLs are not indexed.
 - Homepage game thumbnails and category thumbnails have descriptive alt text; Next Image lazy loading remains in use.
