@@ -163,13 +163,13 @@ export default function HomePage({ initialLocale = "ar", games = [] }: { initial
   const recentGames = recent.map((id) => publishedGames.find((game) => game.id === id)).filter((game): game is Game => Boolean(game));
   const recommended = [...filtered].filter((game) => !recent.includes(game.id)).slice(0, 8);
 
-  const switchLocale = () => setLocale((value) => value === "ar" ? "en" : "ar");
+  const switchLocale = () => { const next = locale === "ar" ? "en" : "ar"; window.location.assign(`/?lang=${next}`); };
 
   return (
     <main className="min-h-screen overflow-hidden pb-12">
       <header className="site-header">
         <div className="container header-inner">
-          <Link href="/" className="brand" aria-label="PlayNova home">
+          <Link href={"/?lang=" + locale} className="brand" aria-label="PlayNova home">
             <span className="brand-mark"><Gamepad2 size={24} /></span>
             <span><strong>Play<span>Nova</span></strong><small>{t.tagline}</small></span>
           </Link>
