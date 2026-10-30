@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import HomeClient from "./home-client";
 import { getLocale } from "@/lib/categories";
 import { localizedAlternates, localizedUrl } from "@/lib/seo";
-import { getPublishedGames, getPublishedCategorySlugs } from "@/lib/games";
-import { getCategory } from "@/lib/categories";
+import { getPublishedGames, getPublishedCategories } from "@/lib/games";
 
 export const dynamic = "force-dynamic";
 
@@ -28,10 +27,10 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
 export default async function HomePage({ searchParams }: Props) {
   const params = await searchParams;
-  const [games, availableCategoryIds] = await Promise.all([getPublishedGames(), getPublishedCategorySlugs()]);
+  const [games, availableCategories] = await Promise.all([getPublishedGames(), getPublishedCategories()]);
   const homeGames = games.map((game) => {
     const category = game.categories[0] || "";
-    const categoryInfo = getCategory(category);
+    const categoryInfo = availableCategories.find((item) => item.slug === category);
     return {
       id: game.slug,
       slug: game.slug,
@@ -43,5 +42,5 @@ export default async function HomePage({ searchParams }: Props) {
       featured: game.featured,
     };
   });
-  return <HomeClient initialLocale={getLocale(params.lang)} games={homeGames} availableCategoryIds={availableCategoryIds} />;
+  return <HomeClient initialLocale={getLocale(params.lang)} games={homeGames} availableCategories={availableCategories.map(({ slug, name }) => ({ slug, name }))} />;
 }
