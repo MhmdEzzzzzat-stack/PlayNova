@@ -137,8 +137,10 @@ export default function HomePage({ initialLocale = "ar", games = [], availableCa
 
   useEffect(() => {
     try {
+      const requestedLocale = new URLSearchParams(window.location.search).get("lang");
       const savedLocale = localStorage.getItem("playnova-locale");
-      if (savedLocale === "ar" || savedLocale === "en") setLocale(savedLocale);
+      if (requestedLocale === "ar" || requestedLocale === "en") setLocale(requestedLocale);
+      else if (savedLocale === "ar" || savedLocale === "en") setLocale(savedLocale);
       setFavorites(JSON.parse(localStorage.getItem("playnova-favorites") || "[]"));
       setRecent(JSON.parse(localStorage.getItem("playnova-recent") || "[]"));
     } catch {
