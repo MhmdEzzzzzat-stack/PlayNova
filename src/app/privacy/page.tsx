@@ -11,7 +11,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
     title: locale === "ar" ? "الخصوصية | PlayNova" : "Privacy | PlayNova",
     description: locale === "ar" ? "تعرف على كيفية تعامل PlayNova مع بياناتك وخصوصيتك." : "How PlayNova handles your data and privacy.",
     alternates: localizedAlternates("/privacy", locale),
-    openGraph: { type: "website", title: locale === "ar" ? "الخصوصية | PlayNova" : "Privacy | PlayNova", description: locale === "ar" ? "تعرف على كيفية تعامل PlayNova مع بياناتك وخصوصيتك." : "How PlayNova handles your data and privacy.", url: new URL(`/privacy?lang=${locale}`, process.env.NEXT_PUBLIC_SITE_URL || "https://playnova.mzt112006mzt.workers.dev").toString() },
+    openGraph: { type: "website", title: locale === "ar" ? "الخصوصية | PlayNova" : "Privacy | PlayNova", description: locale === "ar" ? "تعرف على كيفية تعامل PlayNova مع بياناتك وخصوصيتك." : "How PlayNova handles your data and privacy.", url: localizedUrl("/privacy", locale) },
     robots: { index: true, follow: true },
   };
 }
