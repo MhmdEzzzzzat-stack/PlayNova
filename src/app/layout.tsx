@@ -18,6 +18,7 @@ export const metadata: Metadata = {
     locale: "ar_EG",
     alternateLocale: ["en_US"],
   },
+  ...(process.env.GOOGLE_SITE_VERIFICATION ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } } : {}),
   robots: { index: true, follow: true },
 };
 
