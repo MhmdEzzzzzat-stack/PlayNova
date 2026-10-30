@@ -127,3 +127,44 @@ export async function getPublishedGamesForCategory(slug: string): Promise<Publis
   `).bind(slug).all<GameRow>();
   return result.results.map(mapGame);
 }
+
+export type PublishedCategory = {
+  slug: string;
+  name: Record<GameLocale, string>;
+  description: Record<GameLocale, string>;
+};
+
+const PUBLIC_CATEGORY_SELECT = `
+  SELECT DISTINCT c.slug, c.name_ar, c.name_en, c.description_ar, c.description_en
+  FROM categories c
+  JOIN game_categories gc ON gc.category_id = c.id
+  JOIN games g ON g.id = gc.game_id
+  WHERE c.visible = 1 AND g.status = 'published'
+    AND g.license_status = 'approved' AND g.moderation_status = 'active'
+    AND length(trim(g.authorization_reference)) > 0
+    AND (g.rights_expires_at IS NULL OR date(g.rights_expires_at) >= date('now'))
+`;
+
+export async function getPublishedCategories(): Promise<PublishedCategory[]> {
+  const db = await getPlayNovaDb();
+  const result = await db.prepare(`${PUBLIC_CATEGORY_SELECT} ORDER BY c.sort_order, c.name_en`).all<{
+    slug: string; name_ar: string; name_en: string; description_ar: string; description_en: string;
+  }>();
+  return result.results.map((row) => ({
+    slug: row.slug,
+    name: { ar: row.name_ar, en: row.name_en },
+    description: { ar: row.description_ar, en: row.description_en },
+  }));
+}
+
+export async function getPublishedCategory(slug: string): Promise<PublishedCategory | undefined> {
+  const db = await getPlayNovaDb();
+  const row = await db.prepare(`${PUBLIC_CATEGORY_SELECT} AND c.slug = ? LIMIT 1`).bind(slug).first<{
+    slug: string; name_ar: string; name_en: string; description_ar: string; description_en: string;
+  }>();
+  return row ? {
+    slug: row.slug,
+    name: { ar: row.name_ar, en: row.name_en },
+    description: { ar: row.description_ar, en: row.description_en },
+  } : undefined;
+}
