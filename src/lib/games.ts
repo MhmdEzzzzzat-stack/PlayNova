@@ -40,7 +40,9 @@ const mapGame = (row: GameRow): PublishedGame => ({
   controls: { ar: row.controls_ar, en: row.controls_en },
   categories: row.categories ? row.categories.split(",") : [],
   tags: row.tags ? row.tags.split(",") : [],
-  featured: Boolean(row.featured),\n  mobileSupport: Boolean(row.mobile_support),\n  orientation: row.orientation,
+  featured: Boolean(row.featured),
+  mobileSupport: Boolean(row.mobile_support),
+  orientation: row.orientation,
   ...(row.published_at ? { publishedAt: row.published_at } : {}),
   ...(row.thumbnail_url ? { thumbnail: row.thumbnail_url } : {}),
   launch: {
