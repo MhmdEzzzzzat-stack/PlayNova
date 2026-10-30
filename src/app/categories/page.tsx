@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getLocale } from "@/lib/categories";
 import { getPublishedCategories } from "@/lib/games";
-import { localizedAlternates } from "@/lib/seo";
+import { absoluteUrl, jsonLd, localizedAlternates } from "@/lib/seo";
 import LocaleDocument from "@/components/locale-document";
 
 type Props = { searchParams: Promise<{ lang?: string }> };
@@ -28,12 +28,20 @@ export default async function CategoriesPage({ searchParams }: Props) {
   const locale = getLocale(params.lang);
   const ar = locale === "ar";
   const categories = await getPublishedCategories();
+  const breadcrumbData = {
+    "@context": "https://schema.org", "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: ar ? "الرئيسية" : "Home", item: absoluteUrl(`/?lang=${locale}`) },
+      { "@type": "ListItem", position: 2, name: ar ? "التصنيفات" : "Categories", item: absoluteUrl(`/categories?lang=${locale}`) },
+    ],
+  };
 
   return (
     <main className="directory-page" dir={ar ? "rtl" : "ltr"} lang={locale}>
       <LocaleDocument locale={locale} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbData) }} />
       <div className="directory-container">
-        <Link href={`/?lang=${locale}`} className="directory-back">{ar ? "← العودة للرئيسية" : "← Back to home"}</Link>
+        <nav className="breadcrumbs" aria-label={ar ? "مسار التنقل" : "Breadcrumb"}><Link href={`/?lang=${locale}`}>{ar ? "الرئيسية" : "Home"}</Link><span>/</span><span aria-current="page">{ar ? "التصنيفات" : "Categories"}</span></nav>
         <p className="directory-kicker">PlayNova</p>
         <h1>{ar ? "تصفّح التصنيفات" : "Browse categories"}</h1>
         <p className="directory-intro">{ar ? "اختر نوع اللعبة التي تريد استكشافها." : "Choose a genre to explore published browser games."}</p>
