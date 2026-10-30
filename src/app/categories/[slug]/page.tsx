@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import LocaleDocument from "@/components/locale-document";
 import { notFound } from "next/navigation";
 import { categories, getCategory, getLocale, parsePage } from "@/lib/categories";
 import { getPublishedGamesForCategory, getPublishedCategorySlugs } from "@/lib/games";
@@ -50,6 +51,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   return (
     <main className="directory-page" dir={ar ? "rtl" : "ltr"} lang={locale}>
+      <LocaleDocument locale={locale} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbData) }} />
       <CategoryViewEvent categoryId={category.slug} />
       <div className="directory-container">
