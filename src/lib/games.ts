@@ -108,6 +108,7 @@ export async function getPublishedCategorySlugs(): Promise<string[]> {
     WHERE c.visible = 1 AND g.status = 'published'
       AND g.license_status = 'approved' AND g.moderation_status = 'active'
       AND length(trim(g.authorization_reference)) > 0
+      AND (g.rights_expires_at IS NULL OR date(g.rights_expires_at) >= date('now'))
     ORDER BY c.slug
   `).all<{ slug: string }>();
   return result.results.map((row) => row.slug);
