@@ -58,7 +58,7 @@ const mapGame = (row: GameRow): PublishedGame => ({
 
 const SELECT_PUBLISHED = `
 SELECT g.*,
-  (SELECT group_concat(gc.category_id) FROM game_categories gc WHERE gc.game_id = g.id) AS categories,
+  (SELECT group_concat(c.slug) FROM game_categories gc JOIN categories c ON c.id = gc.category_id WHERE gc.game_id = g.id AND c.visible = 1) AS categories,
   (SELECT group_concat(gt.tag) FROM game_tags gt WHERE gt.game_id = g.id) AS tags
 FROM games g
 WHERE g.status = 'published' AND g.license_status = 'approved' AND g.moderation_status = 'active'
