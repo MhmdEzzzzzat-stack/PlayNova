@@ -27,7 +27,7 @@ type GameRow = {
   thumbnail_url: string | null; launch_mode: LaunchMode; launch_url: string; allowed_origin: string;
   authorization_reference: string; permissions_fullscreen: number; permissions_pointer_lock: number;
   permissions_orientation_lock: number; categories: string | null; tags: string | null;
-  featured: number; published_at: string | null;
+  featured: number; published_at: string | null; mobile_support: number; orientation: "any" | "portrait" | "landscape";
 };
 
 const mapGame = (row: GameRow): PublishedGame => ({
@@ -38,7 +38,7 @@ const mapGame = (row: GameRow): PublishedGame => ({
   controls: { ar: row.controls_ar, en: row.controls_en },
   categories: row.categories ? row.categories.split(",") : [],
   tags: row.tags ? row.tags.split(",") : [],
-  featured: Boolean(row.featured),
+  featured: Boolean(row.featured),\n  mobileSupport: Boolean(row.mobile_support),\n  orientation: row.orientation,
   ...(row.published_at ? { publishedAt: row.published_at } : {}),
   ...(row.thumbnail_url ? { thumbnail: row.thumbnail_url } : {}),
   launch: {
