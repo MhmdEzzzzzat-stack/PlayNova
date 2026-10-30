@@ -15,7 +15,8 @@ type Game = {
   id: string;
   slug: string;
   title: Record<Locale, string>;
-  category: string;\n  categoryName: Record<Locale, string>;
+  category: string;
+  categoryName: Record<Locale, string>;
   thumbnail?: string;
   publishedAt: string;
   featured?: boolean;
@@ -24,8 +25,6 @@ type Game = {
 
 // The repository does not yet include a published-game catalog or API.
 // Keep this collection empty rather than presenting invented games as real content.
-const publishedGames: Game[] = [];
-
 const categories: Category[] = [
   { id: "racing", ar: "سباق", en: "Racing", icon: Car },
   { id: "football", ar: "كرة القدم", en: "Football", icon: Trophy },
@@ -115,7 +114,8 @@ function GameSection({
   );
 }
 
-export default function HomePage({ initialLocale = "ar", games = [] }: { initialLocale?: Locale; games?: Game[] }) {\n  const publishedGames = games;
+export default function HomePage({ initialLocale = "ar", games = [] }: { initialLocale?: Locale; games?: Game[] }) {
+  const publishedGames = games;
   const [locale, setLocale] = useState<Locale>(initialLocale);
   const [query, setQuery] = useState("");
   
