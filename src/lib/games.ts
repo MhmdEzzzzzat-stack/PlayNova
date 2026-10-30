@@ -15,6 +15,8 @@ export type PublishedGame = {
   thumbnail?: string;
   publishedAt?: string;
   featured: boolean;
+  mobileSupport: boolean;
+  orientation: "any" | "portrait" | "landscape";
   launch: {
     mode: LaunchMode; url: string; allowedOrigin: string;
     permissions: GamePermissions; authorizationReference: string;
