@@ -23,8 +23,6 @@ type Game = {
   popularity?: number;
 };
 
-// The repository does not yet include a published-game catalog or API.
-// Keep this collection empty rather than presenting invented games as real content.
 const categories: Category[] = [
   { id: "racing", ar: "سباق", en: "Racing", icon: Car },
   { id: "football", ar: "كرة القدم", en: "Football", icon: Trophy },
