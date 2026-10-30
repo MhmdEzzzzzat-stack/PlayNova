@@ -1,41 +1,42 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import LocaleDocument from "@/components/locale-document";
 import { notFound } from "next/navigation";
-import { categories, getCategory, getLocale, parsePage } from "@/lib/categories";
-import { getPublishedGamesForCategory, getPublishedCategorySlugs } from "@/lib/games";
+import { getLocale, parsePage } from "@/lib/categories";
+import { getPublishedGamesForCategory, getPublishedCategories, getPublishedCategory } from "@/lib/games";
 import { CategoryViewEvent } from "@/components/analytics-events";
 import { absoluteUrl, jsonLd, localizedAlternates, localizedUrl } from "@/lib/seo";
+import LocaleDocument from "@/components/locale-document";
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ lang?: string; page?: string }> };
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
-  const category = getCategory(slug);
+  const category = await getPublishedCategory(slug);
   if (!category) return { title: "Category not found", robots: { index: false, follow: false } };
   const locale = getLocale(query.lang);
-  const games = await getPublishedGamesForCategory(slug);
   const path = `/categories/${encodeURIComponent(slug)}`;
   const description = category.description[locale];
   return {
     title: category.name[locale], description,
     alternates: localizedAlternates(path, locale),
     openGraph: { type: "website", title: category.name[locale], description, url: localizedUrl(path, locale) },
-    robots: { index: games.length > 0, follow: true },
+    robots: { index: true, follow: true },
   };
 }
 
 export default async function CategoryPage({ params, searchParams }: Props) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
-  const category = getCategory(slug);
+  const category = await getPublishedCategory(slug);
   if (!category) notFound();
   const locale = getLocale(query.lang);
   const ar = locale === "ar";
   const page = parsePage(query.page);
-  const games = await getPublishedGamesForCategory(slug);
-  const populatedCategories = new Set(await getPublishedCategorySlugs());
-  const related = categories.filter((item) => item.slug !== slug && populatedCategories.has(item.slug)).slice(0, 5);
+  const [games, allCategories] = await Promise.all([
+    getPublishedGamesForCategory(slug),
+    getPublishedCategories(),
+  ]);
+  const related = allCategories.filter((item) => item.slug !== slug).slice(0, 5);
   const t = ar
     ? { home: "الرئيسية", cats: "التصنيفات", games: "الألعاب في هذا التصنيف", empty: "لا توجد ألعاب منشورة في هذا التصنيف حتى الآن.", search: "ابحث عن لعبة", page: "الصفحة", related: "تصنيفات أخرى", back: "كل التصنيفات" }
     : { home: "Home", cats: "Categories", games: "Games in this category", empty: "There are no published games in this category yet.", search: "Search games", page: "Page", related: "Related categories", back: "All categories" };
