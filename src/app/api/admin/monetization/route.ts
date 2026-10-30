@@ -9,13 +9,13 @@ const keys=["display_ads","game_ads","sponsored_games"] as const;
 const forbidden=()=>NextResponse.json({error:"تحتاج صلاحية المالك أو المدير."},{status:403});
 function sameOrigin(r:NextRequest){try{return !!r.headers.get("origin")&&new URL(r.headers.get("origin")!).origin===new URL(r.url).origin;}catch{return false;}}
 export async function GET(){
- let actor;try{actor=await requireAdmin("administrator");}catch{return forbidden();}
+ try{await requireAdmin("administrator");}catch{return forbidden();}
  const db=await getPlayNovaDb();
  const [settings,placements,eventCounts,revenue]=await Promise.all([
   db.prepare("SELECT setting_key,enabled,provider,provider_approved,configured,personalized_ads,updated_at FROM monetization_settings ORDER BY setting_key").all(),
   db.prepare("SELECT placement_id,enabled,format,label_required,max_height_px,updated_at FROM ad_placements ORDER BY placement_id").all(),
-  db.prepare("SELECT SUM(event_type='ad_request') requests,SUM(event_type='impression') impressions,SUM(event_type='click') clicks FROM monetization_events").first(),
-  db.prepare("SELECT COUNT(*) AS reports, SUM(amount_minor) AS amount_minor, MAX(currency) AS currency FROM monetization_revenue_imports").first()
+  db.prepare("SELECT SUM(event_type='ad_request') requests,SUM(event_type='impression') impressions,SUM(event_type='click') clicks FROM monetization_events") .first<{requests:number|null;impressions:number|null;clicks:number|null}>(),
+  db.prepare("SELECT COUNT(*) AS reports, SUM(amount_minor) AS amount_minor, MAX(currency) AS currency FROM monetization_revenue_imports").first<{reports:number;amount_minor:number|null;currency:string|null}>()
  ]);
  const env=await getFlags();
  return NextResponse.json({settings:settings.results,placements:placements.results,metrics:{requests:eventCounts?.requests||0,impressions:eventCounts?.impressions||0,clicks:eventCounts?.clicks||0,revenueReports:revenue?.reports||0,revenueAvailable:(revenue?.reports||0)>0},readiness:{
