@@ -1,9 +1,11 @@
 import {getPlayNovaDb} from "@/lib/db";
+import {getCloudflareContext} from "@opennextjs/cloudflare";
 type Props={placementId:"home_top"|"home_feed"|"game_below_player"|"game_sidebar"|"category_feed";locale?:"ar"|"en"};
 export default async function AdPlacement({placementId,locale="ar"}:Props){
  try{
-  const env=process.env;
-  if(env.ADS_PROVIDER_APPROVED!=="true"||env.ADS_PROVIDER_CONFIGURED!=="true")return null;
+  const {env}=await getCloudflareContext({async:true});
+  const flags=env as unknown as Record<string,string|undefined>;
+  if(flags.ADS_PROVIDER_APPROVED!=="true"||flags.ADS_PROVIDER_CONFIGURED!=="true")return null;
   const db=await getPlayNovaDb();
   const [feature,slot]=await Promise.all([
    db.prepare("SELECT enabled FROM monetization_settings WHERE setting_key='display_ads'").first<{enabled:number}>(),
