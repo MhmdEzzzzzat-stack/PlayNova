@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LocaleDocument from "@/components/locale-document";
 import { getLocale } from "@/lib/categories";
 import type { Metadata } from "next";
 import { localizedAlternates } from "@/lib/seo";
@@ -19,7 +20,8 @@ export default async function PrivacyPage({ searchParams }: { searchParams: Prom
   const params = await searchParams;
   const locale = getLocale(params.lang);
   const ar = locale === "ar";
-  return <main className="directory-page" dir={ar ? "rtl" : "ltr"} lang={locale}><div className="directory-container">
+  return <main className="directory-page" dir={ar ? "rtl" : "ltr"} lang={locale}>
+      <LocaleDocument locale={locale} /><div className="directory-container">
     <nav className="breadcrumbs" aria-label={ar ? "مسار التنقل" : "Breadcrumb"}><Link href={`/?lang=${locale}`}>{ar ? "الرئيسية" : "Home"}</Link><span>/</span><span>{ar ? "الخصوصية" : "Privacy"}</span></nav>
     <p className="directory-kicker">PlayNova</p><h1>{ar ? "الخصوصية والتحكم في بياناتك" : "Privacy and your data"}</h1>
     {ar ? <>
