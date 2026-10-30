@@ -26,6 +26,13 @@ type GameInput = {
  permissions_orientation_lock?:unknown; mobile_support?:unknown; orientation?:unknown;
 };
 function str(v:unknown,max=5000){return typeof v==="string"?v.trim().slice(0,max):"";}
+function validatePublishedContent(data:{description_ar:string;description_en:string;instructions_ar:string;instructions_en:string;controls_ar:string;controls_en:string},categoryCount:number){
+ if(data.description_ar.trim().length<40||data.description_en.trim().length<40)return "قبل النشر أضف وصفًا حقيقيًا وفريدًا بالعربية والإنجليزية (40 حرفًا على الأقل لكل لغة).";
+ if(data.instructions_ar.trim().length<10||data.instructions_en.trim().length<10)return "أضف تعليمات لعب مفيدة بالعربية والإنجليزية قبل النشر.";
+ if(data.controls_ar.trim().length<3||data.controls_en.trim().length<3)return "أضف معلومات التحكم بالعربية والإنجليزية قبل النشر.";
+ if(categoryCount<1)return "اختر تصنيفًا واحدًا على الأقل قبل النشر.";
+ return null;
+}
 function validate(b:GameInput, partial=false){
  const slug=str(b.slug,100), titleAr=str(b.title_ar,180), titleEn=str(b.title_en,180);
  const launch=str(b.launch_url,2048), origin=str(b.allowed_origin,255);
@@ -61,6 +68,7 @@ export async function POST(request:NextRequest){
  if(actor.role==="editor"&&license!=="pending")return denied();
  const auth=str(b.authorization_reference,500);
  if(status==="published"&&(!rolesCanPublish.includes(actor.role)||license!=="approved"||!auth||!str(b.rights_evidence_url,2048)||!safeUrl(b.rights_evidence_url)))return bad("لا يمكن النشر دون صلاحية مدير/مالك وموافقة الترخيص ورابط إثبات HTTPS ورقم تفويض.");
+ if(status==="published"){const contentError=validatePublishedContent({description_ar:str(b.description_ar),description_en:str(b.description_en),instructions_ar:str(b.instructions_ar),instructions_en:str(b.instructions_en),controls_ar:str(b.controls_ar),controls_en:str(b.controls_en)},Array.isArray(b.category_ids)?b.category_ids.length:0);if(contentError)return bad(contentError);}
  const db=await getPlayNovaDb();
  if(!await providerAllowed(db,str(b.launch_url,2048),str(b.allowed_origin,255)))return bad("نطاق تشغيل اللعبة غير موجود في قائمة مزودي الخدمة المعتمدين.");
  const id=str(b.id,100)||crypto.randomUUID(),now=new Date().toISOString();
@@ -80,7 +88,7 @@ export async function PATCH(request:NextRequest){
  let b:GameInput;try{b=await request.json();}catch{return bad("بيانات غير صالحة.");}
  const id=str(b.id,100);if(!id)return bad("معرّف اللعبة مطلوب.");
  const db=await getPlayNovaDb();
- const existing=await db.prepare("SELECT id,status,license_status,authorization_reference,rights_evidence_url,launch_url,allowed_origin FROM games WHERE id=?").bind(id).first<{id:string;status:GameStatus;license_status:LicenseStatus;authorization_reference:string;rights_evidence_url:string;launch_url:string;allowed_origin:string}>();
+ const existing=await db.prepare("SELECT id,status,license_status,authorization_reference,rights_evidence_url,launch_url,allowed_origin,description_ar,description_en,instructions_ar,instructions_en,controls_ar,controls_en FROM games WHERE id=?").bind(id).first<{id:string;status:GameStatus;license_status:LicenseStatus;authorization_reference:string;rights_evidence_url:string;launch_url:string;allowed_origin:string;description_ar:string;description_en:string;instructions_ar:string;instructions_en:string;controls_ar:string;controls_en:string}>();
  if(!existing)return NextResponse.json({error:"اللعبة غير موجودة."},{status:404});
  const error=validate(b,true);if(error)return bad(error);
  if(actor.role==="editor"&&b.license_status!==undefined)return denied();
@@ -90,6 +98,7 @@ export async function PATCH(request:NextRequest){
  const nextLaunch=b.launch_url===undefined?existing.launch_url:str(b.launch_url,2048),nextOrigin=b.allowed_origin===undefined?existing.allowed_origin:str(b.allowed_origin,255);
  if((b.launch_url!==undefined||b.allowed_origin!==undefined||status==="published")&&!await providerAllowed(db,nextLaunch,nextOrigin))return bad("نطاق تشغيل اللعبة غير موجود في قائمة مزودي الخدمة المعتمدين.");
  if(status==="published"&&((b.status==="published"&&existing.status!=="published"&&!rolesCanPublish.includes(actor.role))||license!=="approved"||!auth||!safeUrl(evidence)))return bad("النشر يتطلب مديرًا أو مالكًا وموافقة الترخيص وإثبات HTTPS.");
+ if(status==="published"){const categoryCount=b.category_ids===undefined?(await db.prepare("SELECT COUNT(*) AS total FROM game_categories WHERE game_id=?").bind(id).first<{total:number}>())?.total||0:Array.isArray(b.category_ids)?b.category_ids.length:0;const contentError=validatePublishedContent({description_ar:b.description_ar===undefined?existing.description_ar:str(b.description_ar),description_en:b.description_en===undefined?existing.description_en:str(b.description_en),instructions_ar:b.instructions_ar===undefined?existing.instructions_ar:str(b.instructions_ar),instructions_en:b.instructions_en===undefined?existing.instructions_en:str(b.instructions_en),controls_ar:b.controls_ar===undefined?existing.controls_ar:str(b.controls_ar),controls_en:b.controls_en===undefined?existing.controls_en:str(b.controls_en)},categoryCount);if(contentError)return bad(contentError);}
  const fields=["slug","title_ar","title_en","description_ar","description_en","instructions_ar","instructions_en","controls_ar","controls_en","thumbnail_url","source_name","source_page_url","launch_url","allowed_origin","launch_mode","license_type","license_status","authorization_reference","authorization_notes","rights_holder","rights_expires_at","rights_evidence_url","status","featured","mobile_support","orientation","permissions_fullscreen","permissions_pointer_lock","permissions_orientation_lock"];
  const values:unknown[]=[];const sets:string[]=[];
  for(const key of fields){if(b[key as keyof GameInput]!==undefined){sets.push(key+"=?");const v=b[key as keyof GameInput];values.push(["featured","mobile_support","permissions_fullscreen","permissions_pointer_lock","permissions_orientation_lock"].includes(key)?(v===true?1:0):key==="thumbnail_url"?(str(v,2048)||null):key==="rights_expires_at"?(str(v,30)||null):str(v,key.startsWith("description")||key.startsWith("instructions")||key.startsWith("controls")?5000:2048));}}
