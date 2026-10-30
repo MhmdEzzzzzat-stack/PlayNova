@@ -15,6 +15,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return {
     title, description,
     alternates: localizedAlternates("/categories", locale),
+    openGraph: { type: "website", title, description, url: new URL(`/categories?lang=${locale}`, process.env.NEXT_PUBLIC_SITE_URL || "https://playnova.mzt112006mzt.workers.dev").toString() },
+    twitter: { card: "summary", title, description },
     robots: { index: populated.length > 0, follow: true },
   };
 }
