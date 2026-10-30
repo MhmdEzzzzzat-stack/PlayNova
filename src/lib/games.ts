@@ -62,7 +62,8 @@ SELECT g.*,
   (SELECT group_concat(gt.tag) FROM game_tags gt WHERE gt.game_id = g.id) AS tags
 FROM games g
 WHERE g.status = 'published' AND g.license_status = 'approved' AND g.moderation_status = 'active'
-  AND length(trim(g.authorization_reference)) > 0\n  AND (g.rights_expires_at IS NULL OR date(g.rights_expires_at) >= date('now'))
+  AND length(trim(g.authorization_reference)) > 0
+  AND (g.rights_expires_at IS NULL OR date(g.rights_expires_at) >= date('now'))
 `;
 
 export async function getPublishedGame(slug: string): Promise<PublishedGame | undefined> {
