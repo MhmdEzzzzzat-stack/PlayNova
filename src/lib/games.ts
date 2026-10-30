@@ -13,6 +13,8 @@ export type PublishedGame = {
   categories: string[];
   tags: string[];
   thumbnail?: string;
+  publishedAt?: string;
+  featured: boolean;
   launch: {
     mode: LaunchMode; url: string; allowedOrigin: string;
     permissions: GamePermissions; authorizationReference: string;
