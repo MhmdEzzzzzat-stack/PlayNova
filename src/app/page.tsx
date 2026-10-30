@@ -27,7 +27,22 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
 export default async function HomePage({ searchParams }: Props) {
   const params = await searchParams;
-  const [games, availableCategories] = await Promise.all([getPublishedGames(), getPublishedCategories()]);
+  const [gamesResult, categoriesResult] = await Promise.allSettled([
+    getPublishedGames(),
+    getPublishedCategories(),
+  ]);
+
+  // Keep the public shell available during a temporary D1 outage or schema mismatch.
+  const games = gamesResult.status === "fulfilled" ? gamesResult.value : [];
+  const availableCategories = categoriesResult.status === "fulfilled" ? categoriesResult.value : [];
+
+  if (gamesResult.status === "rejected") {
+    console.error("PlayNova homepage could not load games from D1:", gamesResult.reason);
+  }
+  if (categoriesResult.status === "rejected") {
+    console.error("PlayNova homepage could not load categories from D1:", categoriesResult.reason);
+  }
+
   const homeGames = games.map((game) => {
     const category = game.categories[0] || "";
     const categoryInfo = availableCategories.find((item) => item.slug === category);
