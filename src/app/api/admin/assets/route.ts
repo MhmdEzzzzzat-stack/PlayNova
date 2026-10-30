@@ -19,6 +19,7 @@ export async function GET(){
 }
 export async function POST(request:NextRequest){
  if(!sameOrigin(request))return no();
+ return NextResponse.json({error:"رفع الملفات غير متاح مؤقتًا حتى إعداد خدمة تخزين بدون بطاقة دفع."},{status:503});
  const contentLength=Number(request.headers.get("content-length")||0);if(contentLength>51*1024*1024)return bad("حجم الطلب يتجاوز الحد الأقصى.");
  let actor;try{actor=await requireAdmin("editor");}catch{return no();}
  let form:FormData;try{form=await request.formData();}catch{return bad("تعذر قراءة نموذج الرفع.");}
@@ -50,6 +51,7 @@ export async function PATCH(request:NextRequest){
  let body:{id?:unknown;decision?:unknown;notes?:unknown};try{body=await request.json();}catch{return bad("بيانات غير صالحة.");}
  const id=typeof body.id==="string"?body.id.slice(0,80):"",decision=body.decision;
  if(!id||!["approve","reject"].includes(String(decision)))return bad("حدد الملف وقرار المراجعة.");
+ if(decision==="approve")return NextResponse.json({error:"اعتماد الملفات غير متاح مؤقتًا حتى إعداد خدمة التخزين."},{status:503});
  const db=await getPlayNovaDb();
  const asset=await db.prepare("SELECT id,game_id,asset_type,status FROM content_assets WHERE id=?").bind(id).first<{id:string;game_id:string|null;asset_type:AssetKind;status:string}>();
  if(!asset||asset.status==="removed")return NextResponse.json({error:"الملف غير موجود."},{status:404});
@@ -67,6 +69,7 @@ export async function PATCH(request:NextRequest){
 export async function DELETE(request:NextRequest){
  if(!sameOrigin(request))return no();
  let actor;try{actor=await requireAdmin("administrator");}catch{return no();}
+ return NextResponse.json({error:"حذف الملفات غير متاح مؤقتًا حتى إعداد خدمة التخزين."},{status:503});
  let body:{id?:unknown;cleanup?:unknown};try{body=await request.json();}catch{return bad("بيانات غير صالحة.");}
  const db=await getPlayNovaDb(),store=await bucket();
  if(body.cleanup===true){
