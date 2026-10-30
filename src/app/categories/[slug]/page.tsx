@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { categories, getCategory, getLocale, parsePage } from "@/lib/categories";
-import { getPublishedGamesForCategory } from "@/lib/games";
+import { getPublishedGamesForCategory, getPublishedCategorySlugs } from "@/lib/games";
 import { CategoryViewEvent } from "@/components/analytics-events";
 import { absoluteUrl, jsonLd, localizedAlternates, localizedUrl } from "@/lib/seo";
 
@@ -33,7 +33,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const ar = locale === "ar";
   const page = parsePage(query.page);
   const games = await getPublishedGamesForCategory(slug);
-  const related = categories.filter((item) => item.slug !== slug).slice(0, 5);
+  const populatedCategories = new Set(await getPublishedCategorySlugs());
+  const related = categories.filter((item) => item.slug !== slug && populatedCategories.has(item.slug)).slice(0, 5);
   const t = ar
     ? { home: "الرئيسية", cats: "التصنيفات", games: "الألعاب في هذا التصنيف", empty: "لا توجد ألعاب منشورة في هذا التصنيف حتى الآن.", search: "ابحث عن لعبة", page: "الصفحة", related: "تصنيفات أخرى", back: "كل التصنيفات" }
     : { home: "Home", cats: "Categories", games: "Games in this category", empty: "There are no published games in this category yet.", search: "Search games", page: "Page", related: "Related categories", back: "All categories" };
