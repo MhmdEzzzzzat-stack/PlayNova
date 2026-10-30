@@ -80,7 +80,7 @@ export default async function SearchPage({
       <SearchEvent term={!invalid ? query : ""} results={results.length} />
       <div className="directory-container">
         <nav className="breadcrumbs" aria-label={ar ? "مسار التنقل" : "Breadcrumb"}>
-          <Link href={\`/?lang=\${locale}\`}>{t.home}</Link>
+          <Link href={`/?lang=${locale}`}>{t.home}</Link>
           <span>/</span>
           <span>{t.title}</span>
         </nav>
@@ -124,7 +124,7 @@ export default async function SearchPage({
                 {results.map((game) => (
                   <Link
                     key={game.slug}
-                    href={\`/games/\${encodeURIComponent(game.slug)}?lang=\${locale}\`}
+                    href={`/games/${encodeURIComponent(game.slug)}?lang=${locale}`}
                     className="directory-card"
                   >
                     <strong>{game.title[locale]}</strong>
@@ -137,7 +137,7 @@ export default async function SearchPage({
           )}
         </section>
 
-        <Link className="directory-back" href={\`/categories?lang=\${locale}\`}>
+        <Link className="directory-back" href={`/categories?lang=${locale}`}>
           {t.categories} ←
         </Link>
       </div>
