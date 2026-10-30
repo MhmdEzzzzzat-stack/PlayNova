@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import LocaleDocument from "@/components/locale-document";
 import { normalizeSearchTerm, getLocale } from "@/lib/categories";
 import {SearchEvent} from "@/components/analytics-events";
 
@@ -17,6 +18,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     : { home: "Home", title: "Search games", placeholder: "Enter a game title or keyword...", submit: "Search", empty: "Enter a game name to start searching.", noResults: "No matching results.", waiting: "Search is not available yet because the game catalog is not connected to a database.", invalid: "The search query is invalid or too long.", categories: "Browse categories" };
   return (
     <main className="directory-page" dir={ar ? "rtl" : "ltr"} lang={locale}>
+      <LocaleDocument locale={locale} />
       <SearchEvent term={!invalid?query:""} results={0} />
       <div className="directory-container">
         <nav className="breadcrumbs"><Link href="/">{t.home}</Link><span>/</span><span>{t.title}</span></nav>
